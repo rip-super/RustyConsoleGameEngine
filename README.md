@@ -13,7 +13,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 
 ## 🛠 Roadmap
 - [ ] Publish to crates.io
-- [ ] Documentation
+- [x] Documentation
 - [ ] Audio support
 - [ ] Image → sprite converter
 - [ ] Cross-platform support
