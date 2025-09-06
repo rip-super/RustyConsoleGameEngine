@@ -1,0 +1,1339 @@
+#![allow(unused)]
+
+// TODO: Audio
+
+// region: Imports
+
+use std::{
+    fs::File,
+    io::{Read, Write},
+    process::exit,
+    sync::atomic::{AtomicBool, Ordering::SeqCst},
+    time::Instant,
+};
+use windows::{
+    Win32::{
+        Foundation::{FALSE, HANDLE, INVALID_HANDLE_VALUE},
+        Graphics::Gdi::{FF_DONTCARE, FW_NORMAL},
+        System::Console::{
+            CHAR_INFO, CONSOLE_CURSOR_INFO, CONSOLE_FONT_INFOEX, CONSOLE_MODE,
+            CONSOLE_SCREEN_BUFFER_INFO, COORD, CTRL_CLOSE_EVENT, ENABLE_EXTENDED_FLAGS,
+            ENABLE_MOUSE_INPUT, ENABLE_QUICK_EDIT_MODE, ENABLE_WINDOW_INPUT, FOCUS_EVENT,
+            FillConsoleOutputCharacterW, GetConsoleCursorInfo, GetConsoleMode,
+            GetConsoleScreenBufferInfo, GetCurrentConsoleFontEx, GetNumberOfConsoleInputEvents,
+            GetStdHandle, INPUT_RECORD, MOUSE_EVENT, MOUSE_MOVED, PHANDLER_ROUTINE,
+            ReadConsoleInputW, SMALL_RECT, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
+            SetConsoleActiveScreenBuffer, SetConsoleCtrlHandler, SetConsoleCursorInfo,
+            SetConsoleCursorPosition, SetConsoleMode, SetConsoleScreenBufferSize, SetConsoleTitleW,
+            SetConsoleWindowInfo, SetCurrentConsoleFontEx, WriteConsoleOutputW,
+        },
+        UI::{Input::KeyboardAndMouse::GetAsyncKeyState, WindowsAndMessaging::wsprintfW},
+    },
+    core::{BOOL, HSTRING, PCWSTR, PWSTR},
+};
+
+// endregion
+
+// region: Constants
+
+pub const FG_BLACK: u16 = 0x0000;
+pub const FG_DARK_BLUE: u16 = 0x0001;
+pub const FG_DARK_GREEN: u16 = 0x0002;
+pub const FG_DARK_CYAN: u16 = 0x0003;
+pub const FG_DARK_RED: u16 = 0x0004;
+pub const FG_DARK_MAGENTA: u16 = 0x0005;
+pub const FG_DARK_YELLOW: u16 = 0x0006;
+pub const FG_GREY: u16 = 0x0007;
+pub const FG_DARK_GREY: u16 = 0x0008;
+pub const FG_BLUE: u16 = 0x0009;
+pub const FG_GREEN: u16 = 0x000A;
+pub const FG_CYAN: u16 = 0x000B;
+pub const FG_RED: u16 = 0x000C;
+pub const FG_MAGENTA: u16 = 0x000D;
+pub const FG_YELLOW: u16 = 0x000E;
+pub const FG_WHITE: u16 = 0x000F;
+
+pub const BG_BLACK: u16 = 0x0000;
+pub const BG_DARK_BLUE: u16 = 0x0010;
+pub const BG_DARK_GREEN: u16 = 0x0020;
+pub const BG_DARK_CYAN: u16 = 0x0030;
+pub const BG_DARK_RED: u16 = 0x0040;
+pub const BG_DARK_MAGENTA: u16 = 0x0050;
+pub const BG_DARK_YELLOW: u16 = 0x0060;
+pub const BG_GREY: u16 = 0x0070;
+pub const BG_DARK_GREY: u16 = 0x0080;
+pub const BG_BLUE: u16 = 0x0090;
+pub const BG_GREEN: u16 = 0x00A0;
+pub const BG_CYAN: u16 = 0x00B0;
+pub const BG_RED: u16 = 0x00C0;
+pub const BG_MAGENTA: u16 = 0x00D0;
+pub const BG_YELLOW: u16 = 0x00E0;
+pub const BG_WHITE: u16 = 0x00F0;
+
+pub const PIXEL_SOLID: u16 = 0x2588;
+pub const PIXEL_THREEQUARTERS: u16 = 0x2593;
+pub const PIXEL_HALF: u16 = 0x2592;
+pub const PIXEL_QUARTER: u16 = 0x2591;
+pub const PIXEL_EMPTY: u16 = 0x20;
+
+pub const M_LEFT: usize = 0;
+pub const M_RIGHT: usize = 1;
+pub const M_MIDDLE: usize = 2;
+pub const M_X1: usize = 3;
+pub const M_X2: usize = 4;
+
+pub const K_SPACE: usize = 0x20;
+pub const K_ENTER: usize = 0x0D;
+pub const K_ESCAPE: usize = 0x1B;
+pub const K_BACKSPACE: usize = 0x08;
+pub const K_TAB: usize = 0x09;
+pub const K_SHIFT: usize = 0x10;
+pub const K_CONTROL: usize = 0x11;
+pub const K_ALT: usize = 0x12;
+pub const K_CAPITAL: usize = 0x14;
+pub const K_NUMLOCK: usize = 0x90;
+pub const K_SCROLL_LOCK: usize = 0x91;
+
+pub const K_UP: usize = 0x26;
+pub const K_DOWN: usize = 0x28;
+pub const K_LEFT: usize = 0x25;
+pub const K_RIGHT: usize = 0x27;
+
+pub const K_F1: usize = 0x70;
+pub const K_F2: usize = 0x71;
+pub const K_F3: usize = 0x72;
+pub const K_F4: usize = 0x73;
+pub const K_F5: usize = 0x74;
+pub const K_F6: usize = 0x75;
+pub const K_F7: usize = 0x76;
+pub const K_F8: usize = 0x77;
+pub const K_F9: usize = 0x78;
+pub const K_F10: usize = 0x79;
+pub const K_F11: usize = 0x7A;
+pub const K_F12: usize = 0x7B;
+
+pub const K_0: usize = 0x30;
+pub const K_1: usize = 0x31;
+pub const K_2: usize = 0x32;
+pub const K_3: usize = 0x33;
+pub const K_4: usize = 0x34;
+pub const K_5: usize = 0x35;
+pub const K_6: usize = 0x36;
+pub const K_7: usize = 0x37;
+pub const K_8: usize = 0x38;
+pub const K_9: usize = 0x39;
+
+pub const K_A: usize = 0x41;
+pub const K_B: usize = 0x42;
+pub const K_C: usize = 0x43;
+pub const K_D: usize = 0x44;
+pub const K_E: usize = 0x45;
+pub const K_F: usize = 0x46;
+pub const K_G: usize = 0x47;
+pub const K_H: usize = 0x48;
+pub const K_I: usize = 0x49;
+pub const K_J: usize = 0x4A;
+pub const K_K: usize = 0x4B;
+pub const K_L: usize = 0x4C;
+pub const K_M: usize = 0x4D;
+pub const K_N: usize = 0x4E;
+pub const K_O: usize = 0x4F;
+pub const K_P: usize = 0x50;
+pub const K_Q: usize = 0x51;
+pub const K_R: usize = 0x52;
+pub const K_S: usize = 0x53;
+pub const K_T: usize = 0x54;
+pub const K_U: usize = 0x55;
+pub const K_V: usize = 0x56;
+pub const K_W: usize = 0x57;
+pub const K_X: usize = 0x58;
+pub const K_Y: usize = 0x59;
+pub const K_Z: usize = 0x5A;
+
+pub const K_NUMPAD_0: usize = 0x60;
+pub const K_NUMPAD_1: usize = 0x61;
+pub const K_NUMPAD_2: usize = 0x62;
+pub const K_NUMPAD_3: usize = 0x63;
+pub const K_NUMPAD_4: usize = 0x64;
+pub const K_NUMPAD_5: usize = 0x65;
+pub const K_NUMPAD_6: usize = 0x66;
+pub const K_NUMPAD_7: usize = 0x67;
+pub const K_NUMPAD_8: usize = 0x68;
+pub const K_NUMPAD_9: usize = 0x69;
+pub const K_NUMPAD_ADD: usize = 0x6B;
+pub const K_NUMPAD_SUBTRACT: usize = 0x6D;
+pub const K_NUMPAD_MULTIPLY: usize = 0x6A;
+pub const K_NUMPAD_DIVIDE: usize = 0x6F;
+pub const K_NUMPAD_ENTER: usize = 0x0D;
+
+// endregion
+
+// region: Console State
+
+#[derive(Clone)]
+struct ConsoleState {
+    screen_width: i16,
+    screen_height: i16,
+    window_rect: SMALL_RECT,
+    font_cfi: CONSOLE_FONT_INFOEX,
+    cursor_info: CONSOLE_CURSOR_INFO,
+    console_mode: CONSOLE_MODE,
+}
+
+impl ConsoleState {
+    fn save(output_handle: HANDLE, input_handle: HANDLE) -> Self {
+        let mut csbi = CONSOLE_SCREEN_BUFFER_INFO::default();
+        unsafe {
+            GetConsoleScreenBufferInfo(output_handle, &mut csbi)
+                .expect("Failed to get console screen buffer info");
+        }
+
+        let mut font_cfi = CONSOLE_FONT_INFOEX {
+            cbSize: std::mem::size_of::<CONSOLE_FONT_INFOEX>() as u32,
+            ..Default::default()
+        };
+        unsafe {
+            GetCurrentConsoleFontEx(output_handle, false, &mut font_cfi)
+                .expect("Failed to get current font");
+        }
+
+        let mut cursor_info = CONSOLE_CURSOR_INFO::default();
+        unsafe {
+            GetConsoleCursorInfo(output_handle, &mut cursor_info)
+                .expect("Failed to get cursor info");
+        }
+
+        let mut mode = CONSOLE_MODE(0);
+        unsafe {
+            GetConsoleMode(input_handle, &mut mode).expect("Failed to get console mode");
+        }
+
+        Self {
+            screen_width: csbi.dwSize.X,
+            screen_height: csbi.dwSize.Y,
+            window_rect: csbi.srWindow,
+            font_cfi,
+            cursor_info,
+            console_mode: mode,
+        }
+    }
+
+    fn restore(&self, output_handle: HANDLE, input_handle: HANDLE) {
+        unsafe {
+            let mut chars_written = 0;
+            let size = (self.screen_width as u32) * (self.screen_height as u32);
+            FillConsoleOutputCharacterW(
+                output_handle,
+                b' ' as u16,
+                size,
+                COORD { X: 0, Y: 0 },
+                &mut chars_written,
+            )
+            .ok();
+            SetConsoleCursorPosition(output_handle, COORD { X: 0, Y: 0 }).ok();
+
+            let coord = COORD {
+                X: self.screen_width,
+                Y: self.screen_height,
+            };
+            SetConsoleScreenBufferSize(output_handle, coord).ok();
+            SetConsoleWindowInfo(output_handle, true, &self.window_rect).ok();
+            SetCurrentConsoleFontEx(output_handle, false, &self.font_cfi).ok();
+            SetConsoleCursorInfo(output_handle, &self.cursor_info).ok();
+            SetConsoleMode(input_handle, self.console_mode).ok();
+        }
+    }
+}
+
+// endregion
+
+// region: Sprite
+
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Sprite {
+    pub width: usize,
+    pub height: usize,
+    glyphs: Vec<u16>,
+    colors: Vec<u16>,
+}
+
+impl Sprite {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            width,
+            height,
+            glyphs: vec![PIXEL_EMPTY; width * height],
+            colors: vec![FG_BLACK; width * height],
+        }
+    }
+
+    pub fn from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut file = File::open(path)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        if buf.len() < 8 {
+            return Err("sprite file too small".into());
+        }
+
+        let width = u32::from_le_bytes(buf[0..4].try_into().unwrap()) as usize;
+        let height = u32::from_le_bytes(buf[4..8].try_into().unwrap()) as usize;
+        let count = width
+            .checked_mul(height)
+            .ok_or("sprite dimensions overflow")?;
+        let expected = 8 + 2 * count * 2;
+        if buf.len() < expected {
+            return Err("sprite file truncated".into());
+        }
+
+        let mut offset = 8;
+        let mut colors = Vec::with_capacity(count);
+        for _ in 0..count {
+            let v = u16::from_le_bytes(buf[offset..offset + 2].try_into().unwrap());
+            offset += 2;
+            colors.push(v);
+        }
+
+        let mut glyphs = Vec::with_capacity(count);
+        for _ in 0..count {
+            let v = u16::from_le_bytes(buf[offset..offset + 2].try_into().unwrap());
+            offset += 2;
+            glyphs.push(v);
+        }
+
+        Ok(Self {
+            width,
+            height,
+            glyphs,
+            colors,
+        })
+    }
+
+    pub fn save_to_file(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let mut file = File::create(path)?;
+        file.write_all(&(self.width as u32).to_le_bytes())?;
+        file.write_all(&(self.height as u32).to_le_bytes())?;
+
+        for &c in &self.colors {
+            file.write_all(&c.to_le_bytes())?;
+        }
+        for &g in &self.glyphs {
+            file.write_all(&g.to_le_bytes())?;
+        }
+
+        Ok(())
+    }
+
+    pub fn set_glyph(&mut self, x: usize, y: usize, c: u16) {
+        if x < self.width && y < self.height {
+            self.glyphs[y * self.width + x] = c;
+        }
+    }
+
+    pub fn set_color(&mut self, x: usize, y: usize, c: u16) {
+        if x < self.width && y < self.height {
+            self.colors[y * self.width + x] = c;
+        }
+    }
+
+    pub fn get_glyph(&self, x: usize, y: usize) -> u16 {
+        if x < self.width && y < self.height {
+            self.glyphs[y * self.width + x]
+        } else {
+            PIXEL_EMPTY
+        }
+    }
+
+    pub fn get_color(&self, x: usize, y: usize) -> u16 {
+        if x < self.width && y < self.height {
+            self.colors[y * self.width + x]
+        } else {
+            FG_BLACK
+        }
+    }
+
+    fn wrapped_sample_index(&self, x: f32, y: f32) -> (usize, usize) {
+        let fx = x - x.floor();
+        let fy = y - y.floor();
+        let sx =
+            ((fx * self.width as f32).floor() as isize).rem_euclid(self.width as isize) as usize;
+        let sy =
+            ((fy * self.height as f32).floor() as isize).rem_euclid(self.height as isize) as usize;
+        (sx, sy)
+    }
+
+    pub fn sample_glyph(&self, x: f32, y: f32) -> u16 {
+        let (sx, sy) = self.wrapped_sample_index(x, y);
+        self.get_glyph(sx, sy)
+    }
+
+    pub fn sample_color(&self, x: f32, y: f32) -> u16 {
+        let (sx, sy) = self.wrapped_sample_index(x, y);
+        self.get_color(sx, sy)
+    }
+}
+
+// endregion
+
+// region: Engine
+
+static RUNNING: AtomicBool = AtomicBool::new(true);
+
+unsafe extern "system" fn console_handler(ctrl_type: u32) -> BOOL {
+    if ctrl_type == CTRL_CLOSE_EVENT {
+        RUNNING.store(false, SeqCst);
+    }
+    BOOL(1)
+}
+
+pub trait ConsoleGame: Sized {
+    fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool;
+    fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool;
+    fn destroy(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
+        true
+    }
+}
+
+#[derive(Clone)]
+pub struct ConsoleGameEngine<G: ConsoleGame> {
+    app_name: String,
+
+    output_handle: HANDLE,
+    input_handle: HANDLE,
+
+    original_state: ConsoleState,
+
+    key_new_state: [u16; 256],
+    key_old_state: [u16; 256],
+    key_pressed: [bool; 256],
+    key_released: [bool; 256],
+    key_held: [bool; 256],
+
+    mouse_new_state: [bool; 5],
+    mouse_old_state: [bool; 5],
+    mouse_pressed: [bool; 5],
+    mouse_released: [bool; 5],
+    mouse_held: [bool; 5],
+
+    mouse_x: i32,
+    mouse_y: i32,
+
+    console_in_focus: bool,
+
+    rect: SMALL_RECT,
+
+    screen_width: i16,
+    screen_height: i16,
+
+    // TODO: add sound
+    // enable_sound: bool
+    window_buffer: Vec<CHAR_INFO>,
+
+    game: Option<G>,
+}
+
+// region: Core
+
+impl<G: ConsoleGame> ConsoleGameEngine<G> {
+    pub fn new(game: G) -> Self {
+        let app_name = "Default".to_string();
+        let mouse_x = 0;
+        let mouse_y = 0;
+        let output_handle = unsafe {
+            GetStdHandle(STD_OUTPUT_HANDLE).unwrap_or_else(|e| {
+                eprintln!("Error getting stdout handle: {:?}", e);
+                exit(1);
+            })
+        };
+        let input_handle = unsafe {
+            GetStdHandle(STD_INPUT_HANDLE).unwrap_or_else(|e| {
+                eprintln!("Error getting stin handle: {:?}", e);
+                exit(1);
+            })
+        };
+        let original_state = ConsoleState::save(output_handle, input_handle);
+        let rect = SMALL_RECT::default();
+        let window_buffer = Vec::new();
+
+        Self {
+            app_name,
+            output_handle,
+            input_handle,
+            original_state,
+            key_new_state: [0; 256],
+            key_old_state: [0; 256],
+            key_pressed: [false; 256],
+            key_released: [false; 256],
+            key_held: [false; 256],
+            mouse_new_state: [false; 5],
+            mouse_old_state: [false; 5],
+            mouse_pressed: [false; 5],
+            mouse_released: [false; 5],
+            mouse_held: [false; 5],
+            mouse_x,
+            mouse_y,
+            console_in_focus: true,
+            rect,
+            screen_width: 80,
+            screen_height: 80,
+            window_buffer,
+            game: Some(game),
+        }
+    }
+
+    pub fn set_app_name(&mut self, app_name: &str) {
+        self.app_name = app_name.to_string();
+    }
+
+    pub fn screen_width(&self) -> i32 {
+        self.screen_width as i32
+    }
+
+    pub fn screen_height(&self) -> i32 {
+        self.screen_height as i32
+    }
+
+    pub fn key_pressed(&self, key: usize) -> bool {
+        self.key_pressed[key]
+    }
+
+    pub fn key_released(&self, key: usize) -> bool {
+        self.key_released[key]
+    }
+
+    pub fn key_held(&self, key: usize) -> bool {
+        self.key_held[key]
+    }
+
+    pub fn mouse_pressed(&self, button: usize) -> bool {
+        self.mouse_pressed[button]
+    }
+
+    pub fn mouse_released(&self, button: usize) -> bool {
+        self.mouse_released[button]
+    }
+
+    pub fn mouse_held(&self, button: usize) -> bool {
+        self.mouse_held[button]
+    }
+
+    pub fn mouse_x(&self) -> i32 {
+        self.mouse_x
+    }
+
+    pub fn mouse_y(&self) -> i32 {
+        self.mouse_y
+    }
+
+    pub fn mouse_pos(&self) -> (i32, i32) {
+        (self.mouse_x, self.mouse_y)
+    }
+
+    pub fn console_focused(&self) -> bool {
+        self.console_in_focus
+    }
+
+    pub fn construct_console(&mut self, width: i16, height: i16, fontw: i16, fonth: i16) {
+        if self.output_handle == INVALID_HANDLE_VALUE {
+            eprintln!("Bad Handle");
+            exit(1);
+        }
+
+        self.screen_width = width;
+        self.screen_height = height;
+
+        self.rect = SMALL_RECT {
+            Left: 0,
+            Top: 0,
+            Right: 1,
+            Bottom: 1,
+        };
+
+        self.set_console_window_info(self.output_handle, true, &self.rect);
+
+        let coord = COORD {
+            X: self.screen_width,
+            Y: self.screen_height,
+        };
+
+        self.set_console_screen_buffer_size(self.output_handle, coord);
+
+        self.set_console_active_screen_buffer(self.output_handle);
+
+        let mut font_cfi = CONSOLE_FONT_INFOEX {
+            cbSize: size_of::<CONSOLE_FONT_INFOEX>().try_into().unwrap(),
+            nFont: 0,
+            dwFontSize: COORD { X: fontw, Y: fonth },
+            FontFamily: FF_DONTCARE.0 as u32,
+            FontWeight: FW_NORMAL.0,
+            ..Default::default()
+        };
+
+        self.set_face_name(&mut font_cfi.FaceName, "Consolas");
+
+        self.set_current_console_font_ex(self.output_handle, false, &font_cfi);
+
+        let mut screen_buffer_csbi = CONSOLE_SCREEN_BUFFER_INFO::default();
+        self.get_console_screen_buffer_info(self.output_handle, &mut screen_buffer_csbi);
+
+        self.validate_window_size(&screen_buffer_csbi);
+
+        self.rect = SMALL_RECT {
+            Left: 0,
+            Top: 0,
+            Right: self.screen_width - 1,
+            Bottom: self.screen_height - 1,
+        };
+
+        self.set_console_window_info(self.output_handle, true, &self.rect);
+
+        self.window_buffer = vec![
+            CHAR_INFO::default();
+            (self.screen_width as i32 * self.screen_height as i32)
+                .try_into()
+                .unwrap()
+        ];
+
+        self.set_ctrl_handler(Some(console_handler), true);
+
+        self.set_console_mode();
+
+        self.set_console_cursor_info();
+    }
+
+    fn update_keys(&mut self) {
+        for i in 0..256 {
+            self.key_pressed[i] = false;
+            self.key_released[i] = false;
+
+            self.key_new_state[i] = unsafe { GetAsyncKeyState(i as i32) as u16 };
+
+            if self.key_new_state[i] != self.key_old_state[i] {
+                if (self.key_new_state[i] & 0x8000) != 0 {
+                    self.key_pressed[i] = !self.key_held[i];
+                    self.key_held[i] = true;
+                } else {
+                    self.key_released[i] = true;
+                    self.key_held[i] = false;
+                }
+            }
+
+            self.key_old_state[i] = self.key_new_state[i];
+        }
+    }
+
+    fn update_mouse(&mut self) {
+        let mut events: u32 = 0;
+        self.get_number_of_console_input_events(&mut events);
+        if events == 0 {
+            return;
+        }
+
+        let count = events.min(32);
+        let mut in_buf = [INPUT_RECORD::default(); 32];
+        let mut read = 0;
+        self.read_console_input_w(count as usize, &mut in_buf, &mut read);
+
+        for record in &in_buf[..read as usize] {
+            match record.EventType as u32 {
+                FOCUS_EVENT => unsafe {
+                    self.console_in_focus = record.Event.FocusEvent.bSetFocus.as_bool();
+                },
+                MOUSE_EVENT => {
+                    let me = unsafe { record.Event.MouseEvent };
+                    match me.dwEventFlags {
+                        0 => {
+                            for m in 0..5 {
+                                self.mouse_new_state[m] = (me.dwButtonState & (1 << m)) != 0;
+                            }
+                        }
+                        MOUSE_MOVED => {
+                            self.mouse_x = me.dwMousePosition.X as i32;
+                            self.mouse_y = me.dwMousePosition.Y as i32;
+                        }
+                        _ => {}
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for m in 0..5 {
+            self.mouse_pressed[m] = false;
+            self.mouse_released[m] = false;
+
+            if self.mouse_new_state[m] != self.mouse_old_state[m] {
+                if self.mouse_new_state[m] {
+                    self.mouse_pressed[m] = true;
+                    self.mouse_held[m] = true;
+                } else {
+                    self.mouse_released[m] = true;
+                    self.mouse_held[m] = false;
+                }
+            }
+
+            self.mouse_old_state[m] = self.mouse_new_state[m];
+        }
+    }
+
+    pub fn start(mut self) {
+        let mut game = self.game.take().unwrap();
+
+        if !game.create(&mut self) {
+            RUNNING.store(false, SeqCst);
+        }
+
+        let mut s: [u16; 256] = [0; 256];
+        let s_ptr = s.as_mut_ptr();
+
+        let mut tp_1 = Instant::now();
+
+        while RUNNING.load(SeqCst) {
+            while RUNNING.load(SeqCst) {
+                let tp_2 = Instant::now();
+                let elapsed = tp_2.duration_since(tp_1);
+                tp_1 = tp_2;
+
+                let elapsed_time = elapsed.as_secs_f32();
+
+                let fps = if elapsed_time > 0.0 {
+                    1.0 / elapsed_time
+                } else {
+                    0.0
+                };
+
+                self.update_keys();
+                self.update_mouse();
+
+                if !game.update(&mut self, elapsed_time) {
+                    RUNNING.store(false, SeqCst);
+                }
+
+                unsafe {
+                    let mut rect = self.rect;
+
+                    let w_char =
+                        format!("Console Game Engine - {} - FPS: {:.2}", self.app_name, fps);
+                    let w_string = HSTRING::from(w_char);
+
+                    wsprintfW(PWSTR(s_ptr), PCWSTR(w_string.as_ptr()));
+
+                    self.set_console_title(PCWSTR(s.as_ptr()));
+
+                    self.write_console_output(
+                        self.output_handle,
+                        self.window_buffer.as_ptr(),
+                        COORD {
+                            X: self.screen_width,
+                            Y: self.screen_height,
+                        },
+                        COORD { X: 0, Y: 0 },
+                        &mut rect,
+                    );
+                }
+            }
+
+            if !game.destroy(&mut self) {
+                RUNNING.store(true, SeqCst);
+            }
+        }
+    }
+}
+
+impl<G: ConsoleGame> Drop for ConsoleGameEngine<G> {
+    fn drop(&mut self) {
+        self.original_state
+            .restore(self.output_handle, self.input_handle);
+    }
+}
+
+// endregion
+
+// region: Win API Wrappers
+
+impl<G: ConsoleGame> ConsoleGameEngine<G> {
+    fn set_console_window_info(&self, handle: HANDLE, absolute: bool, rect: *const SMALL_RECT) {
+        unsafe {
+            SetConsoleWindowInfo(handle, absolute, rect).unwrap_or_else(|e| {
+                eprintln!("SetConsoleWindowInfo Failed: {:?}", e);
+                exit(1);
+            })
+        }
+    }
+
+    fn set_console_screen_buffer_size(&self, handle: HANDLE, size: COORD) {
+        unsafe {
+            SetConsoleScreenBufferSize(handle, size).unwrap_or_else(|e| {
+                eprintln!("SetConsoleScreenBufferSize Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn set_console_active_screen_buffer(&self, handle: HANDLE) {
+        unsafe {
+            SetConsoleActiveScreenBuffer(handle).unwrap_or_else(|e| {
+                eprintln!("SetConsoleActiveScreenBuffer Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn set_face_name(&self, face_name_field: &mut [u16], value: &str) {
+        let wide: Vec<u16> = value.encode_utf16().chain(Some(0)).collect();
+        let len = wide.len().min(face_name_field.len());
+        face_name_field[..len].copy_from_slice(&wide[..len]);
+    }
+
+    fn set_current_console_font_ex(
+        &self,
+        handle: HANDLE,
+        max_window: bool,
+        font: *const CONSOLE_FONT_INFOEX,
+    ) {
+        unsafe {
+            SetCurrentConsoleFontEx(handle, max_window, font).unwrap_or_else(|e| {
+                eprintln!("SetCurrentConsoleFontEx Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn get_console_screen_buffer_info(
+        &self,
+        handle: HANDLE,
+        buffer: *mut CONSOLE_SCREEN_BUFFER_INFO,
+    ) {
+        unsafe {
+            GetConsoleScreenBufferInfo(handle, buffer).unwrap_or_else(|e| {
+                eprintln!("GetConsoleScreenBufferInfo Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn validate_window_size(&self, buffer: &CONSOLE_SCREEN_BUFFER_INFO) {
+        if self.screen_height > buffer.dwMaximumWindowSize.Y {
+            eprintln!("Screen height or Font height is too big");
+            exit(1);
+        } else if self.screen_width > buffer.dwMaximumWindowSize.X {
+            eprintln!("Screen width or Font Width is too big");
+            exit(1);
+        }
+    }
+
+    fn set_console_title(&self, title: PCWSTR) {
+        unsafe {
+            SetConsoleTitleW(title).unwrap_or_else(|e| {
+                eprintln!("SetConsoleTitleW Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn write_console_output(
+        &self,
+        handle: HANDLE,
+        buffer: *const CHAR_INFO,
+        buffer_size: COORD,
+        buffer_coord: COORD,
+        write_region: *mut SMALL_RECT,
+    ) {
+        unsafe {
+            WriteConsoleOutputW(handle, buffer, buffer_size, buffer_coord, write_region)
+                .unwrap_or_else(|e| {
+                    eprintln!("WriteConsoleOutputW Failed: {:?}", e);
+                    exit(1);
+                });
+        }
+    }
+
+    fn set_ctrl_handler(&self, routine: PHANDLER_ROUTINE, add: bool) {
+        unsafe {
+            SetConsoleCtrlHandler(routine, add).unwrap_or_else(|e| {
+                eprintln!("SetConsoleCtrlHandler Failed: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn set_console_mode(&self) {
+        unsafe {
+            let mut mode = CONSOLE_MODE(0);
+            GetConsoleMode(self.input_handle, &mut mode).unwrap_or_else(|e| {
+                eprintln!("Error getting console mode: {:?}", e);
+                exit(1);
+            });
+
+            mode &= !ENABLE_QUICK_EDIT_MODE;
+            mode |= ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT;
+
+            // TODO: add keyboard and mouse input
+            // mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
+
+            SetConsoleMode(self.input_handle, mode).unwrap();
+        }
+    }
+
+    fn set_console_cursor_info(&self) {
+        unsafe {
+            let info = CONSOLE_CURSOR_INFO {
+                dwSize: 1,
+                bVisible: FALSE,
+            };
+            SetConsoleCursorInfo(self.output_handle, &info).unwrap_or_else(|e| {
+                eprintln!("Error setting cursor info: {:?}", e);
+                exit(1);
+            });
+        }
+    }
+
+    fn get_number_of_console_input_events(&self, num_events: &mut u32) {
+        unsafe {
+            GetNumberOfConsoleInputEvents(self.input_handle, num_events).unwrap_or_else(|e| {
+                eprintln!("GetNumberOfConsoleInputEvents Failed: {:?}", e);
+                exit(1);
+            })
+        };
+    }
+
+    fn read_console_input_w(
+        &self,
+        count: usize,
+        buffer: &mut [INPUT_RECORD],
+        num_events: &mut u32,
+    ) {
+        unsafe {
+            ReadConsoleInputW(self.input_handle, &mut buffer[..count], num_events).unwrap_or_else(
+                |e| {
+                    eprintln!("ReadConsoleInputW Failed: {:?}", e);
+                    exit(1);
+                },
+            );
+        }
+    }
+}
+
+// endregion
+
+// region: Drawing
+
+impl<G: ConsoleGame> ConsoleGameEngine<G> {
+    pub fn clip(&self, x: &mut i32, y: &mut i32) {
+        if *x < 0 {
+            *x = 0
+        };
+        if *x >= self.screen_width() {
+            *x = self.screen_width()
+        };
+        if *y < 0 {
+            *y = 0
+        };
+        if *y >= self.screen_height() {
+            *y = self.screen_height()
+        };
+    }
+
+    pub fn draw(&mut self, x: i32, y: i32) {
+        self.draw_with(x, y, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn draw_with(&mut self, x: i32, y: i32, c: u16, col: u16) {
+        if x >= 0 && x < self.screen_width as i32 && y >= 0 && y < self.screen_height as i32 {
+            let idx = (y * self.screen_width as i32 + x) as usize;
+            self.window_buffer[idx].Char.UnicodeChar = c;
+            self.window_buffer[idx].Attributes = col;
+        }
+    }
+
+    pub fn fill_rect(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
+        self.fill_rect_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn fill_rect_with(
+        &mut self,
+        mut x1: i32,
+        mut y1: i32,
+        mut x2: i32,
+        mut y2: i32,
+        c: u16,
+        col: u16,
+    ) {
+        self.clip(&mut x1, &mut y1);
+        self.clip(&mut x2, &mut y2);
+
+        for x in x1..x2 {
+            for y in y1..y2 {
+                self.draw_with(x, y, c, col);
+            }
+        }
+    }
+
+    pub fn clear(&mut self, col: u16) {
+        self.fill_rect_with(
+            0,
+            0,
+            self.screen_width(),
+            self.screen_height(),
+            PIXEL_EMPTY,
+            col,
+        );
+    }
+
+    pub fn draw_string(&mut self, x: i32, y: i32, text: &str) {
+        self.draw_string_with(x, y, text, FG_WHITE);
+    }
+
+    pub fn draw_string_with(&mut self, x: i32, y: i32, text: &str, col: u16) {
+        for (i, ch) in text.encode_utf16().enumerate() {
+            let idx = (y as usize) * self.screen_width as usize + (x as usize + i);
+            self.window_buffer[idx].Char.UnicodeChar = ch;
+            self.window_buffer[idx].Attributes = col;
+        }
+    }
+
+    pub fn draw_string_alpha(&mut self, x: i32, y: i32, text: &str) {
+        self.draw_string_alpha_with(x, y, text, FG_WHITE);
+    }
+
+    pub fn draw_string_alpha_with(&mut self, x: i32, y: i32, text: &str, col: u16) {
+        for (i, ch) in text.encode_utf16().enumerate() {
+            if ch != ' ' as u16 {
+                let idx = (y as usize) * self.screen_width as usize + (x as usize + i);
+                self.window_buffer[idx].Char.UnicodeChar = ch;
+                self.window_buffer[idx].Attributes = col;
+            }
+        }
+    }
+
+    pub fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
+        self.draw_line_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn draw_line_with(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, c: u16, col: u16) {
+        let dx = x2 - x1;
+        let dy = y2 - y1;
+        let dx1 = dx.abs();
+        let dy1 = dy.abs();
+        let mut px = 2 * dy1 - dx1;
+        let mut py = 2 * dx1 - dy1;
+
+        if dy1 <= dx1 {
+            let (mut x, mut y, xe) = if dx >= 0 { (x1, y1, x2) } else { (x2, y2, x1) };
+            self.draw_with(x, y, c, col);
+
+            while x < xe {
+                x += 1;
+                if px < 0 {
+                    px += 2 * dy1;
+                } else {
+                    if (dx < 0 && dy < 0) || (dx > 0 && dy > 0) {
+                        y += 1;
+                    } else {
+                        y -= 1;
+                    }
+                    px += 2 * (dy1 - dx1);
+                }
+                self.draw_with(x, y, c, col);
+            }
+        } else {
+            let (mut x, mut y, ye) = if dy >= 0 { (x1, y1, y2) } else { (x2, y2, y1) };
+            self.draw_with(x, y, c, col);
+
+            while y < ye {
+                y += 1;
+                if py <= 0 {
+                    py += 2 * dx1;
+                } else {
+                    if (dx < 0 && dy < 0) || (dx > 0 && dy > 0) {
+                        x += 1;
+                    } else {
+                        x -= 1;
+                    }
+                    py += 2 * (dx1 - dy1);
+                }
+                self.draw_with(x, y, c, col);
+            }
+        }
+    }
+
+    pub fn draw_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
+        self.draw_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_triangle_with(
+        &mut self,
+        x1: i32,
+        y1: i32,
+        x2: i32,
+        y2: i32,
+        x3: i32,
+        y3: i32,
+        c: u16,
+        col: u16,
+    ) {
+        self.draw_line_with(x1, y1, x2, y2, c, col);
+        self.draw_line_with(x2, y2, x3, y3, c, col);
+        self.draw_line_with(x3, y3, x1, y1, c, col);
+    }
+
+    pub fn fill_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
+        self.fill_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn fill_triangle_with(
+        &mut self,
+        mut x1: i32,
+        mut y1: i32,
+        mut x2: i32,
+        mut y2: i32,
+        mut x3: i32,
+        mut y3: i32,
+        c: u16,
+        col: u16,
+    ) {
+        use std::mem::swap;
+
+        let draw_line = |engine: &mut Self, sx: i32, ex: i32, y: i32| {
+            for i in sx..=ex {
+                engine.draw_with(i, y, c, col);
+            }
+        };
+
+        if y1 > y2 {
+            swap(&mut y1, &mut y2);
+            swap(&mut x1, &mut x2);
+        }
+        if y1 > y3 {
+            swap(&mut y1, &mut y3);
+            swap(&mut x1, &mut x3);
+        }
+        if y2 > y3 {
+            swap(&mut y2, &mut y3);
+            swap(&mut x2, &mut x3);
+        }
+
+        let mut t1x = x1;
+        let mut t2x = x1;
+        let mut y = y1;
+
+        let mut dx1 = x2 - x1;
+        let mut dy1 = y2 - y1;
+        let signx1 = if dx1 < 0 { -1 } else { 1 };
+        dx1 = dx1.abs();
+
+        let dx2 = x3 - x1;
+        let dy2 = y3 - y1;
+        let signx2 = if dx2 < 0 { -1 } else { 1 };
+        let dx2 = dx2.abs();
+
+        let changed1 = dy1 > dx1;
+        let changed2 = dy2 > dx2;
+
+        if y1 != y2 {
+            let mut i = 0;
+            while i < dx1 {
+                let minx = t1x.min(t2x);
+                let maxx = t1x.max(t2x);
+                draw_line(self, minx, maxx, y);
+
+                y += 1;
+                i += 1;
+                if changed1 {
+                    t1x += signx1;
+                }
+                if changed2 {
+                    t2x += signx2;
+                }
+            }
+        }
+
+        dx1 = (x3 - x2).abs();
+        dy1 = y3 - y2;
+        let signx1 = if x3 - x2 < 0 { -1 } else { 1 };
+        t1x = x2;
+        let changed1 = dy1 > dx1;
+
+        while y <= y3 {
+            let minx = t1x.min(t2x);
+            let maxx = t1x.max(t2x);
+            draw_line(self, minx, maxx, y);
+
+            y += 1;
+            if changed1 {
+                t1x += signx1;
+            }
+            if changed2 {
+                t2x += signx2;
+            }
+
+            if y > y3 {
+                break;
+            }
+        }
+    }
+
+    pub fn draw_rectangle(&mut self, x: i32, y: i32, w: i32, h: i32) {
+        self.draw_rectangle_with(x, y, w, h, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn draw_rectangle_with(&mut self, x: i32, y: i32, w: i32, h: i32, c: u16, col: u16) {
+        if w <= 0 || h <= 0 {
+            return;
+        }
+
+        self.draw_line_with(x, y, x + w - 1, y, c, col);
+        self.draw_line_with(x, y + h - 1, x + w - 1, y + h - 1, c, col);
+        self.draw_line_with(x, y, x, y + h - 1, c, col);
+        self.draw_line_with(x + w - 1, y, x + w - 1, y + h - 1, c, col);
+    }
+
+    pub fn draw_circle(&mut self, xc: i32, yc: i32, r: i32) {
+        self.draw_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn draw_circle_with(&mut self, xc: i32, yc: i32, r: i32, c: u16, col: u16) {
+        if r == 0 {
+            return;
+        }
+        let mut x = 0;
+        let mut y = r;
+        let mut p = 3 - 2 * r;
+
+        while y >= x {
+            self.draw_with(xc - x, yc - y, c, col);
+            self.draw_with(xc - y, yc - x, c, col);
+            self.draw_with(xc + y, yc - x, c, col);
+            self.draw_with(xc + x, yc - y, c, col);
+            self.draw_with(xc - x, yc + y, c, col);
+            self.draw_with(xc - y, yc + x, c, col);
+            self.draw_with(xc + y, yc + x, c, col);
+            self.draw_with(xc + x, yc + y, c, col);
+
+            if p < 0 {
+                p += 4 * x + 6;
+            } else {
+                p += 4 * (x - y) + 10;
+                y -= 1;
+            }
+            x += 1;
+        }
+    }
+
+    pub fn fill_circle(&mut self, xc: i32, yc: i32, r: i32) {
+        self.fill_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
+    }
+
+    pub fn fill_circle_with(&mut self, xc: i32, yc: i32, r: i32, c: u16, col: u16) {
+        if r == 0 {
+            return;
+        }
+        let mut x = 0;
+        let mut y = r;
+        let mut p = 3 - 2 * r;
+
+        let draw_line = |engine: &mut Self, sx: i32, ex: i32, ny: i32| {
+            for i in sx..=ex {
+                engine.draw_with(i, ny, c, col);
+            }
+        };
+
+        while y >= x {
+            draw_line(self, xc - x, xc + x, yc - y);
+            draw_line(self, xc - y, xc + y, yc - x);
+            draw_line(self, xc - x, xc + x, yc + y);
+            draw_line(self, xc - y, xc + y, yc + x);
+
+            if p < 0 {
+                p += 4 * x + 6;
+            } else {
+                p += 4 * (x - y) + 10;
+                y -= 1;
+            }
+            x += 1;
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_wireframe_model(
+        &mut self,
+        model_coords: &[(f32, f32)],
+        x: f32,
+        y: f32,
+        r: f32,
+        s: f32,
+        col: u16,
+        c: u16,
+    ) {
+        let verts = model_coords.len();
+        let mut transformed: Vec<(f32, f32)> = vec![(0.0, 0.0); verts];
+
+        for i in 0..verts {
+            let (px, py) = model_coords[i];
+            transformed[i].0 = px * r.cos() - py * r.sin();
+            transformed[i].1 = px * r.sin() + py * r.cos();
+        }
+
+        for t in &mut transformed {
+            t.0 *= s;
+            t.1 *= s;
+        }
+
+        for t in &mut transformed {
+            t.0 += x;
+            t.1 += y;
+        }
+
+        for i in 0..verts {
+            let j = (i + 1) % verts;
+            self.draw_line_with(
+                transformed[i].0 as i32,
+                transformed[i].1 as i32,
+                transformed[j].0 as i32,
+                transformed[j].1 as i32,
+                c,
+                col,
+            );
+        }
+    }
+
+    pub fn draw_sprite(&mut self, x: i32, y: i32, sprite: &Sprite) {
+        for i in 0..sprite.width {
+            for j in 0..sprite.height {
+                let glyph = sprite.get_glyph(i, j);
+                if glyph != PIXEL_EMPTY {
+                    let color = sprite.get_color(i, j);
+                    self.draw_with(x + i as i32, y + j as i32, glyph, color);
+                }
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_partial_sprite(
+        &mut self,
+        x: i32,
+        y: i32,
+        sprite: &Sprite,
+        ox: usize,
+        oy: usize,
+        w: usize,
+        h: usize,
+    ) {
+        for i in 0..w {
+            for j in 0..h {
+                let glyph = sprite.get_glyph(i + ox, j + oy);
+                if glyph != PIXEL_EMPTY {
+                    let color = sprite.get_color(i + ox, j + oy);
+                    self.draw_with(x + i as i32, y + j as i32, glyph, color);
+                }
+            }
+        }
+    }
+}
+
+// endregion
+
+// endregion
