@@ -569,7 +569,7 @@ pub trait ConsoleGame: Sized {
     ///
     /// Use this method to initialize your game state, load sprites, set variables, etc.
     ///
-    /// # Arguments
+    /// # Parameters
     /// * `engine` - A mutable reference to the running `ConsoleGameEngine`. You can use
     ///   this to query the screen, input, or draw anything immediately if needed.
     ///
@@ -582,7 +582,7 @@ pub trait ConsoleGame: Sized {
     /// This is where the main game logic should live: moving objects, handling input,
     /// checking collisions, drawing, etc.
     ///
-    /// # Arguments
+    /// # Parameters
     /// * `engine` - A mutable reference to the `ConsoleGameEngine`. Use it to draw shapes,
     ///   sprites, and query input.
     /// * `elapsed_time` - Time (in seconds) since the last frame. Useful for smooth movement
@@ -596,7 +596,7 @@ pub trait ConsoleGame: Sized {
     ///
     /// Use this method to clean up resources, save game state, or free memory.
     ///
-    /// # Arguments
+    /// # Parameters
     /// * `engine` - A mutable reference to the `ConsoleGameEngine`.
     ///
     /// # Returns
