@@ -1,7 +1,3 @@
-#![allow(unused)]
-
-// TODO: Audio
-
 // region: Imports
 
 use std::{
@@ -389,6 +385,7 @@ unsafe extern "system" fn console_handler(ctrl_type: u32) -> BOOL {
 pub trait ConsoleGame: Sized {
     fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool;
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool;
+    #[allow(unused_variables)]
     fn destroy(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
         true
     }
