@@ -1,4 +1,4 @@
-use console_game_engine::*;
+use rusty_console_game_engine::*;
 
 struct Platformer {
     level: String,

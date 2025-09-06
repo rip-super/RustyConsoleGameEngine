@@ -1,5 +1,5 @@
-use console_game_engine::*;
 use rand::random_range;
+use rusty_console_game_engine::*;
 
 struct GameOfLife {
     output: Vec<i32>,

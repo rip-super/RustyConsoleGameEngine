@@ -1,5 +1,5 @@
-use console_game_engine::*;
 use rand::random_range;
+use rusty_console_game_engine::*;
 
 const CELL_PATH_N: i32 = 0x01;
 const CELL_PATH_E: i32 = 0x02;

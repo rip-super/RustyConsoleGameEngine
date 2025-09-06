@@ -24,12 +24,12 @@ Add the engine via a local path in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-console_game_engine = { path = "../rusty_console_game_engine" }
+rusty_console_game_engine = { path = "../rusty_console_game_engine" }
 ```
 
 Then create a game:
 ```rust
-use console_game_engine::*;
+use rusty_console_game_engine::*;
 
 struct Demo;
 

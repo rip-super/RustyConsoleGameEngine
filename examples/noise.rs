@@ -1,5 +1,5 @@
-use console_game_engine::*;
 use rand::random;
+use rusty_console_game_engine::*;
 
 struct PerlinNoise {
     output_width: usize,
