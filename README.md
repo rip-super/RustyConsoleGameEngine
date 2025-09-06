@@ -53,12 +53,16 @@ fn main() {
     engine.start();
 }
 ```
+To see more typical use cases of the engine, check out the `examples`!
 
 ## 🎮 Examples
 
 Open `conhost.exe` (in the repo root) before running an example.
 
 [Platformer](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/jario.rs) – Mario-style scrolling platformer
+
 [Mode7](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/mode7.rs) – Pseudo 3D flying effect
+
 [Mazes](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/mazes.rs) – Maze generator and renderer
+
 [Raycaster](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/raycaster.rs) - Simple raycasted world to explore
