@@ -1,3 +1,8 @@
+//! # RustyConsoleGameEngine
+//! A Rust port of the olcConsoleGameEngine.
+//! Make simple retro-style console games directly in the terminal,
+//! with an API closely matching the original C++ engine.
+
 // region: Imports
 
 use std::{
@@ -32,134 +37,277 @@ use windows::{
 
 // region: Constants
 
+/// Black foreground color. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
 pub const FG_BLACK: u16 = 0x0000;
+/// Dark blue foreground color.
 pub const FG_DARK_BLUE: u16 = 0x0001;
+/// Dark green foreground color.
 pub const FG_DARK_GREEN: u16 = 0x0002;
+/// Dark cyan foreground color.
 pub const FG_DARK_CYAN: u16 = 0x0003;
+/// Dark red foreground color.
 pub const FG_DARK_RED: u16 = 0x0004;
+/// Dark magenta foreground color.
 pub const FG_DARK_MAGENTA: u16 = 0x0005;
+/// Dark yellow foreground color.
 pub const FG_DARK_YELLOW: u16 = 0x0006;
+/// Grey foreground color.
 pub const FG_GREY: u16 = 0x0007;
+/// Dark grey foreground color.
 pub const FG_DARK_GREY: u16 = 0x0008;
+/// Blue foreground color.
 pub const FG_BLUE: u16 = 0x0009;
+/// Green foreground color.
 pub const FG_GREEN: u16 = 0x000A;
+/// Cyan foreground color.
 pub const FG_CYAN: u16 = 0x000B;
+/// Red foreground color.
 pub const FG_RED: u16 = 0x000C;
+/// Magenta foreground color.
 pub const FG_MAGENTA: u16 = 0x000D;
+/// Yellow foreground color.
 pub const FG_YELLOW: u16 = 0x000E;
+/// White foreground color.
 pub const FG_WHITE: u16 = 0x000F;
 
+/// Black background color. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
 pub const BG_BLACK: u16 = 0x0000;
+/// Dark blue background color.
 pub const BG_DARK_BLUE: u16 = 0x0010;
+/// Dark green background color.
 pub const BG_DARK_GREEN: u16 = 0x0020;
+/// Dark cyan background color.
 pub const BG_DARK_CYAN: u16 = 0x0030;
+/// Dark red background color.
 pub const BG_DARK_RED: u16 = 0x0040;
+/// Dark magenta background color.
 pub const BG_DARK_MAGENTA: u16 = 0x0050;
+/// Dark yellow background color.
 pub const BG_DARK_YELLOW: u16 = 0x0060;
+/// Grey background color.
 pub const BG_GREY: u16 = 0x0070;
+/// Dark grey background color.
 pub const BG_DARK_GREY: u16 = 0x0080;
+/// Blue background color.
 pub const BG_BLUE: u16 = 0x0090;
+/// Green background color.
 pub const BG_GREEN: u16 = 0x00A0;
+/// Cyan background color.
 pub const BG_CYAN: u16 = 0x00B0;
+/// Red background color.
 pub const BG_RED: u16 = 0x00C0;
+/// Magenta background color.
 pub const BG_MAGENTA: u16 = 0x00D0;
+/// Yellow background color.
 pub const BG_YELLOW: u16 = 0x00E0;
+/// White background color.
 pub const BG_WHITE: u16 = 0x00F0;
 
+/// Solid block pixel. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
 pub const PIXEL_SOLID: u16 = 0x2588;
+/// Three-quarter block pixel.
 pub const PIXEL_THREEQUARTERS: u16 = 0x2593;
+/// Half block pixel.
 pub const PIXEL_HALF: u16 = 0x2592;
+/// Quarter block pixel.
 pub const PIXEL_QUARTER: u16 = 0x2591;
+/// Empty space (transparent) pixel.
 pub const PIXEL_EMPTY: u16 = 0x20;
 
+/// Left mouse button. Used with `mouse_pressed`, `mouse_released`, or `mouse_held`.
 pub const M_LEFT: usize = 0;
+/// Right mouse button.
 pub const M_RIGHT: usize = 1;
+/// Middle mouse button.
 pub const M_MIDDLE: usize = 2;
+/// X1 mouse button (side button 1).
 pub const M_X1: usize = 3;
+/// X2 mouse button (side button 2).
 pub const M_X2: usize = 4;
 
+/// Space key. Used with `key_pressed`, `key_released`, or `key_held`.
 pub const K_SPACE: usize = 0x20;
+/// Enter key.
 pub const K_ENTER: usize = 0x0D;
+/// Escape key.
 pub const K_ESCAPE: usize = 0x1B;
+/// Backspace key.
 pub const K_BACKSPACE: usize = 0x08;
+/// Tab key.
 pub const K_TAB: usize = 0x09;
+/// Shift key.
 pub const K_SHIFT: usize = 0x10;
+/// Control key.
 pub const K_CONTROL: usize = 0x11;
+/// Alt key.
 pub const K_ALT: usize = 0x12;
-pub const K_CAPITAL: usize = 0x14;
+/// Caps Lock key.
+pub const K_CAPSLOCK: usize = 0x14;
+/// Num Lock key.
 pub const K_NUMLOCK: usize = 0x90;
+/// Scroll Lock key.
 pub const K_SCROLL_LOCK: usize = 0x91;
 
+/// Up arrow key.
 pub const K_UP: usize = 0x26;
+/// Down arrow key.
 pub const K_DOWN: usize = 0x28;
+/// Left arrow key.
 pub const K_LEFT: usize = 0x25;
+/// Right arrow key.
 pub const K_RIGHT: usize = 0x27;
 
+/// F1 function key.
 pub const K_F1: usize = 0x70;
+/// F2 function key.
 pub const K_F2: usize = 0x71;
+/// F3 function key.
 pub const K_F3: usize = 0x72;
+/// F4 function key.
 pub const K_F4: usize = 0x73;
+/// F5 function key.
 pub const K_F5: usize = 0x74;
+/// F6 function key.
 pub const K_F6: usize = 0x75;
+/// F7 function key.
 pub const K_F7: usize = 0x76;
+/// F8 function key.
 pub const K_F8: usize = 0x77;
+/// F9 function key.
 pub const K_F9: usize = 0x78;
+/// F10 function key.
 pub const K_F10: usize = 0x79;
+/// F11 function key.
 pub const K_F11: usize = 0x7A;
+/// F12 function key.
 pub const K_F12: usize = 0x7B;
 
+/// Number 0 key.
 pub const K_0: usize = 0x30;
+/// Number 1 key.
 pub const K_1: usize = 0x31;
+/// Number 2 key.
 pub const K_2: usize = 0x32;
+/// Number 3 key.
 pub const K_3: usize = 0x33;
+/// Number 4 key.
 pub const K_4: usize = 0x34;
+/// Number 5 key.
 pub const K_5: usize = 0x35;
+/// Number 6 key.
 pub const K_6: usize = 0x36;
+/// Number 7 key.
 pub const K_7: usize = 0x37;
+/// Number 8 key.
 pub const K_8: usize = 0x38;
+/// Number 9 key.
 pub const K_9: usize = 0x39;
 
+/// Letter A key.
 pub const K_A: usize = 0x41;
+/// Letter B key.
 pub const K_B: usize = 0x42;
+/// Letter C key.
 pub const K_C: usize = 0x43;
+/// Letter D key.
 pub const K_D: usize = 0x44;
+/// Letter E key.
 pub const K_E: usize = 0x45;
+/// Letter F key.
 pub const K_F: usize = 0x46;
+/// Letter G key.
 pub const K_G: usize = 0x47;
+/// Letter H key.
 pub const K_H: usize = 0x48;
+/// Letter I key.
 pub const K_I: usize = 0x49;
+/// Letter J key.
 pub const K_J: usize = 0x4A;
+/// Letter K key.
 pub const K_K: usize = 0x4B;
+/// Letter L key.
 pub const K_L: usize = 0x4C;
+/// Letter M key.
 pub const K_M: usize = 0x4D;
+/// Letter N key.
 pub const K_N: usize = 0x4E;
+/// Letter O key.
 pub const K_O: usize = 0x4F;
+/// Letter P key.
 pub const K_P: usize = 0x50;
+/// Letter Q key.
 pub const K_Q: usize = 0x51;
+/// Letter R key.
 pub const K_R: usize = 0x52;
+/// Letter S key.
 pub const K_S: usize = 0x53;
+/// Letter T key.
 pub const K_T: usize = 0x54;
+/// Letter U key.
 pub const K_U: usize = 0x55;
+/// Letter V key.
 pub const K_V: usize = 0x56;
+/// Letter W key.
 pub const K_W: usize = 0x57;
+/// Letter X key.
 pub const K_X: usize = 0x58;
+/// Letter Y key.
 pub const K_Y: usize = 0x59;
+/// Letter Z key.
 pub const K_Z: usize = 0x5A;
 
+/// Semicolon / Colon key
+pub const K_SEMICOLON: usize = 0xBA;
+/// Equals / Plus key
+pub const K_EQUAL: usize = 0xBB;
+/// Comma / Less Than key
+pub const K_COMMA: usize = 0xBC;
+/// Dash / Underscore key
+pub const K_DASH: usize = 0xBD;
+/// Period / Greater Than key
+pub const K_PERIOD: usize = 0xBE;
+/// Forward Slash / Question Mark key
+pub const K_SLASH: usize = 0xBF;
+/// Backtick / Tilde key
+pub const K_BACKTICK: usize = 0xC0;
+/// Left Brace / Left Curly Bracket key
+pub const K_LEFT_BRACE: usize = 0xDB;
+/// Backslash / Pipe key
+pub const K_BACKSLASH: usize = 0xDC;
+/// Right Brace / Right Curly Bracket key
+pub const K_RIGHT_BRACE: usize = 0xDD;
+/// Apostrophe / Double Quote key
+pub const K_APOSTROPHE: usize = 0xDE;
+
+/// Numpad 0 key.
 pub const K_NUMPAD_0: usize = 0x60;
+/// Numpad 1 key.
 pub const K_NUMPAD_1: usize = 0x61;
+/// Numpad 2 key.
 pub const K_NUMPAD_2: usize = 0x62;
+/// Numpad 3 key.
 pub const K_NUMPAD_3: usize = 0x63;
+/// Numpad 4 key.
 pub const K_NUMPAD_4: usize = 0x64;
+/// Numpad 5 key.
 pub const K_NUMPAD_5: usize = 0x65;
+/// Numpad 6 key.
 pub const K_NUMPAD_6: usize = 0x66;
+/// Numpad 7 key.
 pub const K_NUMPAD_7: usize = 0x67;
+/// Numpad 8 key.
 pub const K_NUMPAD_8: usize = 0x68;
+/// Numpad 9 key.
 pub const K_NUMPAD_9: usize = 0x69;
+/// Numpad addition key (+).
 pub const K_NUMPAD_ADD: usize = 0x6B;
+/// Numpad subtraction key (-).
 pub const K_NUMPAD_SUBTRACT: usize = 0x6D;
+/// Numpad multiplication key (*).
 pub const K_NUMPAD_MULTIPLY: usize = 0x6A;
+/// Numpad division key (/).
 pub const K_NUMPAD_DIVIDE: usize = 0x6F;
+/// Numpad Enter key.
 pub const K_NUMPAD_ENTER: usize = 0x0D;
 
 // endregion
@@ -245,15 +393,23 @@ impl ConsoleState {
 
 // region: Sprite
 
+/// A 2D sprite consisting of glyphs and color values.
+///
+/// Sprites can be drawn using `ConsoleGameEngine` methods like `draw_sprite` or
+/// `draw_partial_sprite`.
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Sprite {
+    /// Width of the sprite in characters.
     pub width: usize,
+    /// Height of the sprite in characters.
     pub height: usize,
     glyphs: Vec<u16>,
     colors: Vec<u16>,
 }
 
 impl Sprite {
+    /// Creates a new sprite of the given width and height.
+    /// All glyphs are initialized to `PIXEL_EMPTY` and all colors to `FG_BLACK`.
     pub fn new(width: usize, height: usize) -> Self {
         Self {
             width,
@@ -263,6 +419,8 @@ impl Sprite {
         }
     }
 
+    /// Loads a sprite from a file (by convention ending in `.spr`).
+    /// The file must contain width and height (u32 little-endian) followed by colors and glyphs.
     pub fn from_file(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut file = File::open(path)?;
         let mut buf = Vec::new();
@@ -305,6 +463,7 @@ impl Sprite {
         })
     }
 
+    /// Saves the sprite to a `.spr` file in the same format as `from_file`.
     pub fn save_to_file(&self, path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let mut file = File::create(path)?;
         file.write_all(&(self.width as u32).to_le_bytes())?;
@@ -320,18 +479,21 @@ impl Sprite {
         Ok(())
     }
 
-    pub fn set_glyph(&mut self, x: usize, y: usize, c: u16) {
+    /// Sets the glyph at `(x, y)` to `c`.
+    pub fn set_glyph(&mut self, x: usize, y: usize, g: u16) {
         if x < self.width && y < self.height {
-            self.glyphs[y * self.width + x] = c;
+            self.glyphs[y * self.width + x] = g;
         }
     }
 
+    /// Sets the color at `(x, y)` to `c`.
     pub fn set_color(&mut self, x: usize, y: usize, c: u16) {
         if x < self.width && y < self.height {
             self.colors[y * self.width + x] = c;
         }
     }
 
+    /// Returns the glyph at `(x, y)`, or `PIXEL_EMPTY` if out of bounds.
     pub fn get_glyph(&self, x: usize, y: usize) -> u16 {
         if x < self.width && y < self.height {
             self.glyphs[y * self.width + x]
@@ -340,6 +502,7 @@ impl Sprite {
         }
     }
 
+    /// Returns the color at `(x, y)`, or `FG_BLACK` if out of bounds.
     pub fn get_color(&self, x: usize, y: usize) -> u16 {
         if x < self.width && y < self.height {
             self.colors[y * self.width + x]
@@ -358,11 +521,15 @@ impl Sprite {
         (sx, sy)
     }
 
+    /// Samples the glyph at normalized coordinates `(x, y)` in `[0.0, 1.0)` space.
+    /// Wrapping occurs for coordinates outside the [0,1) range.
     pub fn sample_glyph(&self, x: f32, y: f32) -> u16 {
         let (sx, sy) = self.wrapped_sample_index(x, y);
         self.get_glyph(sx, sy)
     }
 
+    /// Samples the color at normalized coordinates `(x, y)` in `[0.0, 1.0)` space.
+    /// Wrapping occurs for coordinates outside the [0,1) range.
     pub fn sample_color(&self, x: f32, y: f32) -> u16 {
         let (sx, sy) = self.wrapped_sample_index(x, y);
         self.get_color(sx, sy)
@@ -382,15 +549,59 @@ unsafe extern "system" fn console_handler(ctrl_type: u32) -> BOOL {
     BOOL(1)
 }
 
+/// Trait that defines the behavior of a game to be run by the `ConsoleGameEngine`.
+///
+/// To create a game, define a struct containing your game state and implement this trait
+/// for it. The engine will call the provided methods during the game loop.
 pub trait ConsoleGame: Sized {
+    /// Called once when the game starts.
+    ///
+    /// Use this method to initialize your game state, load sprites, set variables, etc.
+    ///
+    /// # Arguments
+    /// * `engine` - A mutable reference to the running `ConsoleGameEngine`. You can use
+    ///   this to query the screen, input, or draw anything immediately if needed.
+    ///
+    /// # Returns
+    /// Return `true` to continue running the game, or `false` to immediately exit.
     fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool;
+
+    /// Called once per frame to update the game state and render.
+    ///
+    /// This is where the main game logic should live: moving objects, handling input,
+    /// checking collisions, drawing, etc.
+    ///
+    /// # Arguments
+    /// * `engine` - A mutable reference to the `ConsoleGameEngine`. Use it to draw shapes,
+    ///   sprites, and query input.
+    /// * `elapsed_time` - Time (in seconds) since the last frame. Useful for smooth movement
+    ///   and animations.
+    ///
+    /// # Returns
+    /// Return `true` to continue running the game, or `false` to exit.
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool;
+
+    /// Called once when the game exits or the engine is shutting down.
+    ///
+    /// Use this method to clean up resources, save game state, or free memory.
+    ///
+    /// # Arguments
+    /// * `engine` - A mutable reference to the `ConsoleGameEngine`.
+    ///
+    /// # Returns
+    /// Return `true` to allow normal shutdown, or `false` to prevent shutdown (rarely used).
+    ///
+    /// # Default Implementation
+    /// The default implementation does nothing and returns `true`.
     #[allow(unused_variables)]
     fn destroy(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
         true
     }
 }
 
+/// The main engine that runs a game implementing `ConsoleGame`.
+///
+/// Handles console creation, input, rendering, and the main game loop.
 #[derive(Clone)]
 pub struct ConsoleGameEngine<G: ConsoleGame> {
     app_name: String,
@@ -432,6 +643,10 @@ pub struct ConsoleGameEngine<G: ConsoleGame> {
 // region: Core
 
 impl<G: ConsoleGame> ConsoleGameEngine<G> {
+    /// Creates a new `ConsoleGameEngine` with the given game.
+    ///
+    /// # Parameters
+    /// * `game` - The user-defined struct implementing `ConsoleGame`.
     pub fn new(game: G) -> Self {
         let app_name = "Default".to_string();
         let mouse_x = 0;
@@ -478,58 +693,99 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Sets the console window title.
+    ///
+    /// # Parameters
+    /// * `app_name` - Title to display in the console window.
     pub fn set_app_name(&mut self, app_name: &str) {
         self.app_name = app_name.to_string();
     }
 
+    /// Returns the width of the console in characters.
     pub fn screen_width(&self) -> i32 {
         self.screen_width as i32
     }
 
+    /// Returns the height of the console in characters.
     pub fn screen_height(&self) -> i32 {
         self.screen_height as i32
     }
 
+    /// Returns `true` if the specified key was pressed this frame.
+    ///
+    /// Normally used in conjection with key constants such as
+    /// `K_W`, `K_0`, `K_UP`, etc.
     pub fn key_pressed(&self, key: usize) -> bool {
         self.key_pressed[key]
     }
 
+    /// Returns `true` if the specified key was released this frame.
+    ///
+    /// Normally used in conjection with key constants such as
+    /// `K_W`, `K_0`, `K_UP`, etc.
     pub fn key_released(&self, key: usize) -> bool {
         self.key_released[key]
     }
 
+    /// Returns `true` if the specified key is currently held down.
+    ///
+    /// Normally used in conjection with key constants such as
+    /// `K_W`, `K_0`, `K_UP`, etc.
     pub fn key_held(&self, key: usize) -> bool {
         self.key_held[key]
     }
 
+    /// Returns `true` if the specified mouse button was pressed this frame.
+    ///
+    /// Normally used in conjection with mouse button constants
+    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
     pub fn mouse_pressed(&self, button: usize) -> bool {
         self.mouse_pressed[button]
     }
 
+    /// Returns `true` if the specified mouse button was released this frame.
+    ///
+    /// Normally used in conjection with mouse button constants
+    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
     pub fn mouse_released(&self, button: usize) -> bool {
         self.mouse_released[button]
     }
 
+    /// Returns `true` if the specified mouse button is currently held down.
+    ///
+    /// Normally used in conjection with mouse button constants
+    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
     pub fn mouse_held(&self, button: usize) -> bool {
         self.mouse_held[button]
     }
 
+    /// Returns the current X position of the mouse in console coordinates.
     pub fn mouse_x(&self) -> i32 {
         self.mouse_x
     }
 
+    /// Returns the current Y position of the mouse in console coordinates.
     pub fn mouse_y(&self) -> i32 {
         self.mouse_y
     }
 
+    /// Returns the current (X, Y) position of the mouse.
     pub fn mouse_pos(&self) -> (i32, i32) {
         (self.mouse_x, self.mouse_y)
     }
 
+    /// Returns `true` if the console currently has focus.
     pub fn console_focused(&self) -> bool {
         self.console_in_focus
     }
 
+    /// Initializes the console with the given dimensions and font size.
+    ///
+    /// # Parameters
+    /// * `width` - Console width in characters.
+    /// * `height` - Console height in characters.
+    /// * `fontw` - Font width in pixels.
+    /// * `fonth` - Font height in pixels.
     pub fn construct_console(&mut self, width: i16, height: i16, fontw: i16, fonth: i16) {
         if self.output_handle == INVALID_HANDLE_VALUE {
             eprintln!("Bad Handle");
@@ -673,6 +929,9 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Starts the game loop and runs the game until it exits.
+    ///
+    /// Calls `create()`, `update()`, and `destroy()` on the user's game struct.
     pub fn start(mut self) {
         let mut game = self.game.take().unwrap();
 
@@ -916,6 +1175,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 // region: Drawing
 
 impl<G: ConsoleGame> ConsoleGameEngine<G> {
+    /// Clamps `x` and `y` to be within the screen boundaries.
     pub fn clip(&self, x: &mut i32, y: &mut i32) {
         if *x < 0 {
             *x = 0
@@ -931,10 +1191,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         };
     }
 
+    /// Draws a single white pixel at `(x, y)`.
     pub fn draw(&mut self, x: i32, y: i32) {
         self.draw_with(x, y, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Draws a single pixel at `(x, y)` with the specified glyph and color.
     pub fn draw_with(&mut self, x: i32, y: i32, c: u16, col: u16) {
         if x >= 0 && x < self.screen_width as i32 && y >= 0 && y < self.screen_height as i32 {
             let idx = (y * self.screen_width as i32 + x) as usize;
@@ -943,29 +1205,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
-    pub fn fill_rect(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
-        self.fill_rect_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
-    }
-
-    pub fn fill_rect_with(
-        &mut self,
-        mut x1: i32,
-        mut y1: i32,
-        mut x2: i32,
-        mut y2: i32,
-        c: u16,
-        col: u16,
-    ) {
-        self.clip(&mut x1, &mut y1);
-        self.clip(&mut x2, &mut y2);
-
-        for x in x1..x2 {
-            for y in y1..y2 {
-                self.draw_with(x, y, c, col);
-            }
-        }
-    }
-
+    /// Clears the entire screen with the given color.
     pub fn clear(&mut self, col: u16) {
         self.fill_rect_with(
             0,
@@ -977,10 +1217,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         );
     }
 
+    /// Draws a string of white text starting at `(x, y)`.
     pub fn draw_string(&mut self, x: i32, y: i32, text: &str) {
         self.draw_string_with(x, y, text, FG_WHITE);
     }
 
+    /// Draws a string starting at `(x, y)` with the specified color.
     pub fn draw_string_with(&mut self, x: i32, y: i32, text: &str, col: u16) {
         for (i, ch) in text.encode_utf16().enumerate() {
             let idx = (y as usize) * self.screen_width as usize + (x as usize + i);
@@ -989,10 +1231,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a string at `(x, y)` ignoring spaces (transparent spaces).
     pub fn draw_string_alpha(&mut self, x: i32, y: i32, text: &str) {
         self.draw_string_alpha_with(x, y, text, FG_WHITE);
     }
 
+    /// Draws a string at `(x, y)` ignoring spaces (transparent spaces), using the specified color.
     pub fn draw_string_alpha_with(&mut self, x: i32, y: i32, text: &str, col: u16) {
         for (i, ch) in text.encode_utf16().enumerate() {
             if ch != ' ' as u16 {
@@ -1003,10 +1247,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a white line from `(x1, y1)` to `(x2, y2)`.
     pub fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
         self.draw_line_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Draws a line from `(x1, y1)` to `(x2, y2)` with the specified glyph and color.
     pub fn draw_line_with(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, c: u16, col: u16) {
         let dx = x2 - x1;
         let dy = y2 - y1;
@@ -1054,10 +1300,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a white triangle connecting three points.
     pub fn draw_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
         self.draw_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Draws a triangle connecting three points with the specified glyph and color.
     #[allow(clippy::too_many_arguments)]
     pub fn draw_triangle_with(
         &mut self,
@@ -1075,10 +1323,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         self.draw_line_with(x3, y3, x1, y1, c, col);
     }
 
+    /// Fills a triangle connecting three points with white pixels.
     pub fn fill_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
         self.fill_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Fills a triangle connecting three points with the specified glyph and color.
     #[allow(clippy::too_many_arguments)]
     pub fn fill_triangle_with(
         &mut self,
@@ -1172,10 +1422,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a white rectangle at `(x, y)` with width `w` and height `h`.
     pub fn draw_rectangle(&mut self, x: i32, y: i32, w: i32, h: i32) {
         self.draw_rectangle_with(x, y, w, h, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Draws a rectangle at `(x, y)` with width `w` and height `h` using the specified glyph and color.
     pub fn draw_rectangle_with(&mut self, x: i32, y: i32, w: i32, h: i32, c: u16, col: u16) {
         if w <= 0 || h <= 0 {
             return;
@@ -1187,10 +1439,37 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         self.draw_line_with(x + w - 1, y, x + w - 1, y + h - 1, c, col);
     }
 
+    /// Fills a rectangle from `(x1, y1)` to `(x2, y2)` with white pixels.
+    pub fn fill_rect(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
+        self.fill_rect_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
+    }
+
+    /// Fills a rectangle from `(x1, y1)` to `(x2, y2)` with the specified glyph and color.
+    pub fn fill_rect_with(
+        &mut self,
+        mut x1: i32,
+        mut y1: i32,
+        mut x2: i32,
+        mut y2: i32,
+        c: u16,
+        col: u16,
+    ) {
+        self.clip(&mut x1, &mut y1);
+        self.clip(&mut x2, &mut y2);
+
+        for x in x1..x2 {
+            for y in y1..y2 {
+                self.draw_with(x, y, c, col);
+            }
+        }
+    }
+
+    /// Draws a white circle centered at `(xc, yc)` with radius `r`.
     pub fn draw_circle(&mut self, xc: i32, yc: i32, r: i32) {
         self.draw_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Draws a circle centered at `(xc, yc)` with radius `r` using the specified glyph and color.
     pub fn draw_circle_with(&mut self, xc: i32, yc: i32, r: i32, c: u16, col: u16) {
         if r == 0 {
             return;
@@ -1219,10 +1498,12 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Fills a circle centered at `(xc, yc)` with white pixels and radius `r`.
     pub fn fill_circle(&mut self, xc: i32, yc: i32, r: i32) {
         self.fill_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
     }
 
+    /// Fills a circle centered at `(xc, yc)` with radius `r` using the specified glyph and color.
     pub fn fill_circle_with(&mut self, xc: i32, yc: i32, r: i32, c: u16, col: u16) {
         if r == 0 {
             return;
@@ -1253,6 +1534,15 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a 2D wireframe model at a given position, rotation, and scale.
+    ///
+    /// # Parameters
+    /// - `model_coords`: A slice of `(x, y)` coordinates representing the vertices of the model.
+    /// - `x`, `y`: The position on the screen to draw the model (translation applied to all vertices).
+    /// - `r`: Rotation in radians, applied around the origin of the model coordinates.
+    /// - `s`: Scale factor applied to the model.
+    /// - `col`: Color used to draw the lines.
+    /// - `c`:  glyph used to draw the lines
     #[allow(clippy::too_many_arguments)]
     pub fn draw_wireframe_model(
         &mut self,
@@ -1296,6 +1586,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a sprite at position `(x, y)`.
     pub fn draw_sprite(&mut self, x: i32, y: i32, sprite: &Sprite) {
         for i in 0..sprite.width {
             for j in 0..sprite.height {
@@ -1308,6 +1599,13 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
+    /// Draws a portion of a sprite at position `(x, y)` on the screen.
+    ///
+    /// # Parameters
+    /// - `x`, `y`: The top-left coordinates on the screen where the sprite portion will be drawn.
+    /// - `sprite`: The `Sprite` to draw.
+    /// - `ox`, `oy`: The top-left coordinates inside the sprite to start copying from (offset within the sprite).
+    /// - `w`, `h`: The width and height of the portion to draw (how much of the sprite to copy).
     #[allow(clippy::too_many_arguments)]
     pub fn draw_partial_sprite(
         &mut self,
