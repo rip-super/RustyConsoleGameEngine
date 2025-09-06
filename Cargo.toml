@@ -12,6 +12,13 @@ windows = { version = "0.62", features = [
     "Win32_UI_Input_KeyboardAndMouse",
 ] }
 
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "debuginfo"
+
 # used for examples
 [dev-dependencies]
 rand = "0.9.2"
