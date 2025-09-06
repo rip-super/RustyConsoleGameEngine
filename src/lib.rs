@@ -256,29 +256,6 @@ pub const K_Y: usize = 0x59;
 /// Letter Z key.
 pub const K_Z: usize = 0x5A;
 
-/// Semicolon / Colon key
-pub const K_SEMICOLON: usize = 0xBA;
-/// Equals / Plus key
-pub const K_EQUAL: usize = 0xBB;
-/// Comma / Less Than key
-pub const K_COMMA: usize = 0xBC;
-/// Dash / Underscore key
-pub const K_DASH: usize = 0xBD;
-/// Period / Greater Than key
-pub const K_PERIOD: usize = 0xBE;
-/// Forward Slash / Question Mark key
-pub const K_SLASH: usize = 0xBF;
-/// Backtick / Tilde key
-pub const K_BACKTICK: usize = 0xC0;
-/// Left Brace / Left Curly Bracket key
-pub const K_LEFT_BRACE: usize = 0xDB;
-/// Backslash / Pipe key
-pub const K_BACKSLASH: usize = 0xDC;
-/// Right Brace / Right Curly Bracket key
-pub const K_RIGHT_BRACE: usize = 0xDD;
-/// Apostrophe / Double Quote key
-pub const K_APOSTROPHE: usize = 0xDE;
-
 /// Numpad 0 key.
 pub const K_NUMPAD_0: usize = 0x60;
 /// Numpad 1 key.
@@ -309,6 +286,40 @@ pub const K_NUMPAD_MULTIPLY: usize = 0x6A;
 pub const K_NUMPAD_DIVIDE: usize = 0x6F;
 /// Numpad Enter key.
 pub const K_NUMPAD_ENTER: usize = 0x0D;
+
+/// Semicolon / Colon key.
+/// Only works with US ANSI Keyboards
+pub const K_SEMICOLON: usize = 0xBA;
+/// Equals / Plus key.
+/// Only works with US ANSI Keyboards
+pub const K_EQUAL: usize = 0xBB;
+/// Comma / Less Than key.
+/// Only works with US ANSI Keyboards
+pub const K_COMMA: usize = 0xBC;
+/// Dash / Underscore key.
+/// Only works with US ANSI Keyboards
+pub const K_DASH: usize = 0xBD;
+/// Period / Greater Than key.
+/// Only works with US ANSI Keyboards
+pub const K_PERIOD: usize = 0xBE;
+/// Forward Slash / Question Mark key.
+/// Only works with US ANSI Keyboards
+pub const K_SLASH: usize = 0xBF;
+/// Backtick / Tilde key.
+/// Only works with US ANSI Keyboards
+pub const K_BACKTICK: usize = 0xC0;
+/// Left Brace / Left Curly Bracket key.
+/// Only works with US ANSI Keyboards
+pub const K_LEFT_BRACE: usize = 0xDB;
+/// Backslash / Pipe key.
+/// Only works with US ANSI Keyboards
+pub const K_BACKSLASH: usize = 0xDC;
+/// Right Brace / Right Curly Bracket key.
+/// Only works with US ANSI Keyboards
+pub const K_RIGHT_BRACE: usize = 0xDD;
+/// Apostrophe / Double Quote key.
+/// Only works with US ANSI Keyboards
+pub const K_APOSTROPHE: usize = 0xDE;
 
 // endregion
 
@@ -1583,6 +1594,102 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
                 c,
                 col,
             );
+        }
+    }
+
+    /// Draws a filled 2D model at a given position, rotation, and scale.
+    /// Works for concave and convex polygons (even-odd fill rule).
+    ///
+    /// # Parameters
+    /// - `model_coords`: A slice of `(x, y)` coordinates representing the vertices of the model.
+    /// - `x`, `y`: The position on the screen to draw the model (translation applied to all vertices).
+    /// - `r`: Rotation in radians, applied around the origin of the model coordinates.
+    /// - `s`: Scale factor applied to the model.
+    /// - `col`: Color used to draw the filled pixels.
+    /// - `c`: Glyph used to draw the filled pixels.
+    #[allow(clippy::too_many_arguments)]
+    pub fn draw_filled_model(
+        &mut self,
+        model_coords: &[(f32, f32)],
+        x: f32,
+        y: f32,
+        r: f32,
+        s: f32,
+        col: u16,
+        c: u16,
+    ) {
+        let verts = model_coords.len();
+        if verts < 3 {
+            return;
+        }
+
+        let cos_r = r.cos();
+        let sin_r = r.sin();
+        let mut transformed: Vec<(f32, f32)> = Vec::with_capacity(verts);
+        for &(px, py) in model_coords {
+            let tx = px * cos_r - py * sin_r;
+            let ty = px * sin_r + py * cos_r;
+            transformed.push((tx * s + x, ty * s + y));
+        }
+
+        let min_yf = transformed
+            .iter()
+            .map(|t| t.1)
+            .fold(f32::INFINITY, |a, b| a.min(b));
+        let max_yf = transformed
+            .iter()
+            .map(|t| t.1)
+            .fold(f32::NEG_INFINITY, |a, b| a.max(b));
+        let y_start = min_yf.floor() as i32;
+        let y_end = max_yf.ceil() as i32;
+
+        for y_scan in y_start..=y_end {
+            let sample_y = y_scan as f32 + 0.5;
+            let mut intersects: Vec<f32> = Vec::new();
+
+            for i in 0..verts {
+                let (x1, y1) = transformed[i];
+                let (x2, y2) = transformed[(i + 1) % verts];
+
+                if (y1 - y2).abs() < f32::EPSILON {
+                    continue;
+                }
+
+                let (ymin, ymax, x_a, y_a, x_b, y_b) = if y1 < y2 {
+                    (y1, y2, x1, y1, x2, y2)
+                } else {
+                    (y2, y1, x2, y2, x1, y1)
+                };
+
+                if sample_y >= ymin && sample_y < ymax {
+                    let t = (sample_y - y_a) / (y_b - y_a);
+                    let xi = x_a + t * (x_b - x_a);
+                    intersects.push(xi);
+                }
+            }
+
+            if intersects.is_empty() {
+                continue;
+            }
+
+            intersects.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+
+            let mut k = 0usize;
+            while k + 1 < intersects.len() {
+                let x_left_f = intersects[k];
+                let x_right_f = intersects[k + 1];
+
+                let x_start = x_left_f.ceil() as i32;
+                let x_end = x_right_f.floor() as i32;
+
+                if x_end >= x_start {
+                    for xi in x_start..=x_end {
+                        self.draw_with(xi, y_scan, c, col);
+                    }
+                }
+
+                k += 2;
+            }
         }
     }
 
