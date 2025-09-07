@@ -26,7 +26,7 @@ Add the engine to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty_console_game_engine = "0.2.0"
+rusty_console_game_engine = "0.2.1"
 ```
 
 Then create a game:
