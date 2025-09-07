@@ -12,7 +12,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - Keyboard & mouse input
 
 ## 🛠 Roadmap
-- [x] Publish to crates.io
+- [x] Publish to crates.io (available [here](https://crates.io/crates/rusty_console_game_engine))
 - [x] Documentation
 - [ ] Audio support
 - [ ] Image → sprite converter
@@ -20,11 +20,11 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 
 ## 🚀 Quickstart
 
-Add the engine via a local path in your `Cargo.toml`:
+Add the engine to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty_console_game_engine = { path = "../rusty_console_game_engine" }
+rusty_console_game_engine = "0.1.1"
 ```
 
 Then create a game:
