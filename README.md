@@ -12,7 +12,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - Keyboard & mouse input
 
 ## 🛠 Roadmap
-- [ ] Publish to crates.io
+- [x] Publish to crates.io
 - [x] Documentation
 - [ ] Audio support
 - [ ] Image → sprite converter
