@@ -1,13 +1,16 @@
 [package]
 name = "rusty_console_game_engine"
 version = "0.1.1"
-edition = "2024"
+edition = "2021"
 authors = ["Sahil Dash <sahildash7704@gmail.com>"]
 description = "A Rust port of the olcConsoleGameEngine"
 license = "MIT"
 documentation = "https://docs.rs/rusty_console_game_engine"
 homepage = "https://github.com/rip-super/RustyConsoleGameEngine"
 repository = "https://github.com/rip-super/RustyConsoleGameEngine"
+
+[package.metadata.docs.rs]
+default-target = "x86_64-pc-windows-msvc"
 
 [dependencies]
 windows = { version = "0.62", features = [
