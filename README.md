@@ -6,6 +6,8 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 
 ⚠️ Currently works only on Windows 10/11. ⚠️
 
+⚠️ Make sure to use `conhost.exe` to run any console games. ⚠️
+
 ## ✨ Features
 - Basic Console Rendering (text, colors, and shapes)
 - Sprites (.spr format)
@@ -24,7 +26,7 @@ Add the engine to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty_console_game_engine = "0.1.1"
+rusty_console_game_engine = "0.2.0"
 ```
 
 Then create a game:
@@ -49,7 +51,7 @@ impl ConsoleGame for Demo {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Demo);
     engine.set_app_name("Example");
-    engine.construct_console(150, 150, 4, 4);
+    engine.construct_console(150, 150, 4, 4).expect("Console Construction Failed");
     engine.start();
 }
 ```
