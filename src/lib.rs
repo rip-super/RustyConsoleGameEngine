@@ -13,24 +13,24 @@ use std::{
     time::Instant,
 };
 use windows::{
+    core::{BOOL, HSTRING, PCWSTR, PWSTR},
     Win32::{
         Foundation::{FALSE, HANDLE, INVALID_HANDLE_VALUE},
         Graphics::Gdi::{FF_DONTCARE, FW_NORMAL},
         System::Console::{
-            CHAR_INFO, CONSOLE_CURSOR_INFO, CONSOLE_FONT_INFOEX, CONSOLE_MODE,
-            CONSOLE_SCREEN_BUFFER_INFO, COORD, CTRL_CLOSE_EVENT, ENABLE_EXTENDED_FLAGS,
-            ENABLE_MOUSE_INPUT, ENABLE_QUICK_EDIT_MODE, ENABLE_WINDOW_INPUT, FOCUS_EVENT,
             FillConsoleOutputCharacterW, GetConsoleCursorInfo, GetConsoleMode,
-            GetConsoleScreenBufferInfo, GetCurrentConsoleFontEx, GetNumberOfConsoleInputEvents,
-            GetStdHandle, INPUT_RECORD, MOUSE_EVENT, MOUSE_MOVED, PHANDLER_ROUTINE,
-            ReadConsoleInputW, SMALL_RECT, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
+            GetConsoleScreenBufferInfo, GetCurrentConsoleFontEx, GetLargestConsoleWindowSize,
+            GetNumberOfConsoleInputEvents, GetStdHandle, ReadConsoleInputW,
             SetConsoleActiveScreenBuffer, SetConsoleCtrlHandler, SetConsoleCursorInfo,
             SetConsoleCursorPosition, SetConsoleMode, SetConsoleScreenBufferSize, SetConsoleTitleW,
-            SetConsoleWindowInfo, SetCurrentConsoleFontEx, WriteConsoleOutputW,
+            SetConsoleWindowInfo, SetCurrentConsoleFontEx, WriteConsoleOutputW, CHAR_INFO,
+            CONSOLE_CURSOR_INFO, CONSOLE_FONT_INFOEX, CONSOLE_MODE, CONSOLE_SCREEN_BUFFER_INFO,
+            COORD, CTRL_CLOSE_EVENT, ENABLE_EXTENDED_FLAGS, ENABLE_MOUSE_INPUT,
+            ENABLE_QUICK_EDIT_MODE, ENABLE_WINDOW_INPUT, FOCUS_EVENT, INPUT_RECORD, MOUSE_EVENT,
+            MOUSE_MOVED, PHANDLER_ROUTINE, SMALL_RECT, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
         },
         UI::{Input::KeyboardAndMouse::GetAsyncKeyState, WindowsAndMessaging::wsprintfW},
     },
-    core::{BOOL, HSTRING, PCWSTR, PWSTR},
 };
 
 // endregion
@@ -749,7 +749,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
     /// Returns `true` if the specified mouse button was pressed this frame.
     ///
     /// Normally used in conjection with mouse button constants
-    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
+    /// such as `M_LEFT`, `M_MIDDLE`, `M_RIGHT`, etc.
     pub fn mouse_pressed(&self, button: usize) -> bool {
         self.mouse_pressed[button]
     }
@@ -757,7 +757,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
     /// Returns `true` if the specified mouse button was released this frame.
     ///
     /// Normally used in conjection with mouse button constants
-    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
+    /// such as `M_LEFT`, `M_MIDDLE`, `M_RIGHT`, etc.
     pub fn mouse_released(&self, button: usize) -> bool {
         self.mouse_released[button]
     }
@@ -765,7 +765,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
     /// Returns `true` if the specified mouse button is currently held down.
     ///
     /// Normally used in conjection with mouse button constants
-    /// such as `M_LEFT`, `M_MIDDLE`m `M_RIGHT`, etc.
+    /// such as `M_LEFT`, `M_MIDDLE`, `M_RIGHT`, etc.
     pub fn mouse_held(&self, button: usize) -> bool {
         self.mouse_held[button]
     }
@@ -792,15 +792,29 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Initializes the console with the given dimensions and font size.
     ///
+    /// This function sets up the console window, screen buffer, font, and other
+    /// properties. It now returns a `Result` to indicate success or failure.
+    ///
     /// # Parameters
-    /// * `width` - Console width in characters.
-    /// * `height` - Console height in characters.
-    /// * `fontw` - Font width in pixels.
-    /// * `fonth` - Font height in pixels.
-    pub fn construct_console(&mut self, width: i16, height: i16, fontw: i16, fonth: i16) {
+    /// - `width` - Console width in characters.
+    /// - `height` - Console height in characters.
+    /// - `fontw` - Font width in pixels.
+    /// - `fonth` - Font height in pixels.
+    ///
+    /// # Errors
+    /// Returns an error if:
+    /// - The console handle is invalid.
+    /// - The requested console size exceeds the maximum allowed for the current display/font.
+    /// - Any Windows API call fails (setting buffer size, window info, font, etc.)
+    pub fn construct_console(
+        &mut self,
+        width: i16,
+        height: i16,
+        fontw: i16,
+        fonth: i16,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if self.output_handle == INVALID_HANDLE_VALUE {
-            eprintln!("Bad Handle");
-            exit(1);
+            return Err("Bad Handle".into());
         }
 
         self.screen_width = width;
@@ -813,16 +827,16 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
             Bottom: 1,
         };
 
-        self.set_console_window_info(self.output_handle, true, &self.rect);
+        self.set_console_window_info(self.output_handle, true, &self.rect)?;
 
         let coord = COORD {
             X: self.screen_width,
             Y: self.screen_height,
         };
 
-        self.set_console_screen_buffer_size(self.output_handle, coord);
+        self.set_console_screen_buffer_size(self.output_handle, coord)?;
 
-        self.set_console_active_screen_buffer(self.output_handle);
+        self.set_console_active_screen_buffer(self.output_handle)?;
 
         let mut font_cfi = CONSOLE_FONT_INFOEX {
             cbSize: size_of::<CONSOLE_FONT_INFOEX>().try_into().unwrap(),
@@ -835,12 +849,22 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
         self.set_face_name(&mut font_cfi.FaceName, "Consolas");
 
-        self.set_current_console_font_ex(self.output_handle, false, &font_cfi);
+        self.set_current_console_font_ex(self.output_handle, false, &font_cfi)?;
+
+        let max_size = unsafe { GetLargestConsoleWindowSize(self.output_handle) };
+
+        if width > max_size.X || height > max_size.Y {
+            return Err(format!(
+                "Requested console size {}x{} exceeds maximum {}x{} for this display/font.",
+                width, height, max_size.X, max_size.Y
+            )
+            .into());
+        }
 
         let mut screen_buffer_csbi = CONSOLE_SCREEN_BUFFER_INFO::default();
-        self.get_console_screen_buffer_info(self.output_handle, &mut screen_buffer_csbi);
+        self.get_console_screen_buffer_info(self.output_handle, &mut screen_buffer_csbi)?;
 
-        self.validate_window_size(&screen_buffer_csbi);
+        self.validate_window_size(&screen_buffer_csbi)?;
 
         self.rect = SMALL_RECT {
             Left: 0,
@@ -849,20 +873,20 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
             Bottom: self.screen_height - 1,
         };
 
-        self.set_console_window_info(self.output_handle, true, &self.rect);
+        self.set_console_window_info(self.output_handle, true, &self.rect)?;
 
         self.window_buffer = vec![
             CHAR_INFO::default();
-            (self.screen_width as i32 * self.screen_height as i32)
-                .try_into()
-                .unwrap()
+            (self.screen_width as i32 * self.screen_height as i32) as usize
         ];
 
-        self.set_ctrl_handler(Some(console_handler), true);
+        self.set_ctrl_handler(Some(console_handler), true)?;
 
-        self.set_console_mode();
+        self.set_console_mode()?;
 
-        self.set_console_cursor_info();
+        self.set_console_cursor_info()?;
+
+        Ok(())
     }
 
     fn update_keys(&mut self) {
@@ -1019,31 +1043,64 @@ impl<G: ConsoleGame> Drop for ConsoleGameEngine<G> {
 // region: Win API Wrappers
 
 impl<G: ConsoleGame> ConsoleGameEngine<G> {
-    fn set_console_window_info(&self, handle: HANDLE, absolute: bool, rect: *const SMALL_RECT) {
+    fn set_console_window_info(
+        &self,
+        handle: HANDLE,
+        absolute: bool,
+        rect: *const SMALL_RECT,
+    ) -> windows::core::Result<()> {
         unsafe {
-            SetConsoleWindowInfo(handle, absolute, rect).unwrap_or_else(|e| {
-                eprintln!("SetConsoleWindowInfo Failed: {:?}", e);
-                exit(1);
-            })
+            SetConsoleWindowInfo(handle, absolute, rect)?;
         }
+        Ok(())
     }
 
-    fn set_console_screen_buffer_size(&self, handle: HANDLE, size: COORD) {
+    fn set_console_screen_buffer_size(
+        &self,
+        handle: HANDLE,
+        size: COORD,
+    ) -> windows::core::Result<()> {
         unsafe {
-            SetConsoleScreenBufferSize(handle, size).unwrap_or_else(|e| {
-                eprintln!("SetConsoleScreenBufferSize Failed: {:?}", e);
-                exit(1);
-            });
+            SetConsoleScreenBufferSize(handle, size)?;
         }
+        Ok(())
     }
 
-    fn set_console_active_screen_buffer(&self, handle: HANDLE) {
+    fn set_console_active_screen_buffer(&self, handle: HANDLE) -> windows::core::Result<()> {
         unsafe {
-            SetConsoleActiveScreenBuffer(handle).unwrap_or_else(|e| {
-                eprintln!("SetConsoleActiveScreenBuffer Failed: {:?}", e);
-                exit(1);
-            });
+            SetConsoleActiveScreenBuffer(handle)?;
         }
+        Ok(())
+    }
+
+    fn set_current_console_font_ex(
+        &self,
+        handle: HANDLE,
+        max_window: bool,
+        font: *const CONSOLE_FONT_INFOEX,
+    ) -> windows::core::Result<()> {
+        unsafe {
+            SetCurrentConsoleFontEx(handle, max_window, font)?;
+        }
+        Ok(())
+    }
+
+    fn get_console_screen_buffer_info(
+        &self,
+        handle: HANDLE,
+        buffer: *mut CONSOLE_SCREEN_BUFFER_INFO,
+    ) -> windows::core::Result<()> {
+        unsafe {
+            GetConsoleScreenBufferInfo(handle, buffer)?;
+        }
+        Ok(())
+    }
+
+    fn set_ctrl_handler(&self, routine: PHANDLER_ROUTINE, add: bool) -> windows::core::Result<()> {
+        unsafe {
+            SetConsoleCtrlHandler(routine, add)?;
+        }
+        Ok(())
     }
 
     fn set_face_name(&self, face_name_field: &mut [u16], value: &str) {
@@ -1052,41 +1109,14 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         face_name_field[..len].copy_from_slice(&wide[..len]);
     }
 
-    fn set_current_console_font_ex(
-        &self,
-        handle: HANDLE,
-        max_window: bool,
-        font: *const CONSOLE_FONT_INFOEX,
-    ) {
-        unsafe {
-            SetCurrentConsoleFontEx(handle, max_window, font).unwrap_or_else(|e| {
-                eprintln!("SetCurrentConsoleFontEx Failed: {:?}", e);
-                exit(1);
-            });
-        }
-    }
-
-    fn get_console_screen_buffer_info(
-        &self,
-        handle: HANDLE,
-        buffer: *mut CONSOLE_SCREEN_BUFFER_INFO,
-    ) {
-        unsafe {
-            GetConsoleScreenBufferInfo(handle, buffer).unwrap_or_else(|e| {
-                eprintln!("GetConsoleScreenBufferInfo Failed: {:?}", e);
-                exit(1);
-            });
-        }
-    }
-
-    fn validate_window_size(&self, buffer: &CONSOLE_SCREEN_BUFFER_INFO) {
+    fn validate_window_size(&self, buffer: &CONSOLE_SCREEN_BUFFER_INFO) -> Result<(), String> {
         if self.screen_height > buffer.dwMaximumWindowSize.Y {
-            eprintln!("Screen height or Font height is too big");
-            exit(1);
-        } else if self.screen_width > buffer.dwMaximumWindowSize.X {
-            eprintln!("Screen width or Font Width is too big");
-            exit(1);
+            return Err("Screen height or font height too big".into());
         }
+        if self.screen_width > buffer.dwMaximumWindowSize.X {
+            return Err("Screen width or font width too big".into());
+        }
+        Ok(())
     }
 
     fn set_console_title(&self, title: PCWSTR) {
@@ -1115,44 +1145,28 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         }
     }
 
-    fn set_ctrl_handler(&self, routine: PHANDLER_ROUTINE, add: bool) {
-        unsafe {
-            SetConsoleCtrlHandler(routine, add).unwrap_or_else(|e| {
-                eprintln!("SetConsoleCtrlHandler Failed: {:?}", e);
-                exit(1);
-            });
-        }
-    }
-
-    fn set_console_mode(&self) {
+    fn set_console_mode(&self) -> windows::core::Result<()> {
         unsafe {
             let mut mode = CONSOLE_MODE(0);
-            GetConsoleMode(self.input_handle, &mut mode).unwrap_or_else(|e| {
-                eprintln!("Error getting console mode: {:?}", e);
-                exit(1);
-            });
+            GetConsoleMode(self.input_handle, &mut mode)?;
 
             mode &= !ENABLE_QUICK_EDIT_MODE;
             mode |= ENABLE_EXTENDED_FLAGS | ENABLE_MOUSE_INPUT | ENABLE_WINDOW_INPUT;
 
-            // TODO: add keyboard and mouse input
-            // mode |= ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT;
-
-            SetConsoleMode(self.input_handle, mode).unwrap();
+            SetConsoleMode(self.input_handle, mode)?;
         }
+        Ok(())
     }
 
-    fn set_console_cursor_info(&self) {
+    fn set_console_cursor_info(&self) -> windows::core::Result<()> {
         unsafe {
             let info = CONSOLE_CURSOR_INFO {
                 dwSize: 1,
                 bVisible: FALSE,
             };
-            SetConsoleCursorInfo(self.output_handle, &info).unwrap_or_else(|e| {
-                eprintln!("Error setting cursor info: {:?}", e);
-                exit(1);
-            });
+            SetConsoleCursorInfo(self.output_handle, &info)?;
         }
+        Ok(())
     }
 
     fn get_number_of_console_input_events(&self, num_events: &mut u32) {

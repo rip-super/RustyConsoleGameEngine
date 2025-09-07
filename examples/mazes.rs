@@ -210,6 +210,8 @@ impl ConsoleGame for Maze {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Maze::new());
     engine.set_app_name("Mazes");
-    engine.construct_console(160, 100, 8, 8);
+    engine
+        .construct_console(160, 100, 8, 8)
+        .expect("Console Construction Failed");
     engine.start();
 }

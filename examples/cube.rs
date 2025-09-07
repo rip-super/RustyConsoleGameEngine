@@ -164,6 +164,8 @@ impl ConsoleGame for Engine3D {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Engine3D::new());
     engine.set_app_name("Cube");
-    engine.construct_console(256, 240, 4, 4);
+    engine
+        .construct_console(256, 240, 4, 4)
+        .expect("Console Construction Failed");
     engine.start();
 }

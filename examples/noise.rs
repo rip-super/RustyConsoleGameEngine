@@ -253,6 +253,8 @@ impl ConsoleGame for PerlinNoise {
 fn main() {
     let mut engine = ConsoleGameEngine::new(PerlinNoise::new());
     engine.set_app_name("Perlin Noise");
-    engine.construct_console(256, 256, 3, 3);
+    engine
+        .construct_console(256, 256, 3, 3)
+        .expect("Console Construction Failed");
     engine.start();
 }

@@ -128,6 +128,8 @@ impl ConsoleGame for Mode7 {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Mode7::new());
     engine.set_app_name("Mode7");
-    engine.construct_console(320, 240, 4, 4);
+    engine
+        .construct_console(320, 240, 4, 4)
+        .expect("Console Construction Failed");
     engine.start();
 }

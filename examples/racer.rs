@@ -260,6 +260,8 @@ impl ConsoleGame for Racer {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Racer::default());
     engine.set_app_name("Racer");
-    engine.construct_console(160, 100, 8, 8);
+    engine
+        .construct_console(160, 100, 8, 8)
+        .expect("Console Construction Failed");
     engine.start();
 }

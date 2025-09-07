@@ -306,6 +306,8 @@ impl ConsoleGame for Platformer {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Platformer::new());
     engine.set_app_name("2D Scrolling Platformer");
-    engine.construct_console(256, 240, 4, 4);
+    engine
+        .construct_console(256, 240, 4, 4)
+        .expect("Console Construction Failed");
     engine.start();
 }

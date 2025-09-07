@@ -99,6 +99,7 @@ impl ConsoleGame for GameOfLife {
 fn main() {
     let mut game = ConsoleGameEngine::new(GameOfLife::new());
     game.set_app_name("Game Of Life");
-    game.construct_console(160, 100, 8, 8);
+    game.construct_console(160, 100, 8, 8)
+        .expect("Console Construction Failed");
     game.start();
 }

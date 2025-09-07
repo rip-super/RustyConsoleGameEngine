@@ -225,6 +225,8 @@ impl ConsoleGame for Raycaster {
 fn main() {
     let mut engine = ConsoleGameEngine::new(Raycaster::new());
     engine.set_app_name("Raycaster");
-    engine.construct_console(200, 100, 8, 8);
+    engine
+        .construct_console(200, 100, 8, 8)
+        .expect("Console Construction Failed");
     engine.start();
 }
