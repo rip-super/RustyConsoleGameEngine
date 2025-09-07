@@ -1,6 +1,6 @@
 [package]
 name = "rusty_console_game_engine"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 authors = ["Sahil Dash <sahildash7704@gmail.com>"]
 description = "A Rust port of the olcConsoleGameEngine"
