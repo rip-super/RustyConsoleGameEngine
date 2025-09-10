@@ -5,37 +5,32 @@
 
 // region: Imports
 
-use std::{
-    fs::File,
-    io::{Read, Write},
-    process::exit,
-    sync::atomic::{AtomicBool, Ordering::SeqCst},
-    time::Instant,
+use std::collections::HashMap;
+use std::f32::consts::PI;
+use std::fs::File;
+use std::io::{Read, Write};
+use std::path::Path;
+use std::process::exit;
+use std::sync::{
+    atomic::{AtomicBool, AtomicU64, Ordering::*},
+    mpsc::{self, Sender},
 };
-use windows::{
-    core::{BOOL, HSTRING, PCWSTR, PWSTR},
-    Win32::{
-        Foundation::{FALSE, HANDLE, INVALID_HANDLE_VALUE},
-        Graphics::Gdi::{FF_DONTCARE, FW_NORMAL},
-        System::Console::{
-            FillConsoleOutputCharacterW, GetConsoleCursorInfo, GetConsoleMode,
-            GetConsoleScreenBufferInfo, GetCurrentConsoleFontEx, GetLargestConsoleWindowSize,
-            GetNumberOfConsoleInputEvents, GetStdHandle, ReadConsoleInputW,
-            SetConsoleActiveScreenBuffer, SetConsoleCtrlHandler, SetConsoleCursorInfo,
-            SetConsoleCursorPosition, SetConsoleMode, SetConsoleScreenBufferSize, SetConsoleTitleW,
-            SetConsoleWindowInfo, SetCurrentConsoleFontEx, WriteConsoleOutputW, CHAR_INFO,
-            CONSOLE_CURSOR_INFO, CONSOLE_FONT_INFOEX, CONSOLE_MODE, CONSOLE_SCREEN_BUFFER_INFO,
-            COORD, CTRL_CLOSE_EVENT, ENABLE_EXTENDED_FLAGS, ENABLE_MOUSE_INPUT,
-            ENABLE_QUICK_EDIT_MODE, ENABLE_WINDOW_INPUT, FOCUS_EVENT, INPUT_RECORD, MOUSE_EVENT,
-            MOUSE_MOVED, PHANDLER_ROUTINE, SMALL_RECT, STD_INPUT_HANDLE, STD_OUTPUT_HANDLE,
-        },
-        UI::{Input::KeyboardAndMouse::GetAsyncKeyState, WindowsAndMessaging::wsprintfW},
-    },
+use std::thread;
+use std::time::Instant;
+
+use windows::core::{BOOL, HSTRING, PCWSTR, PSTR, PWSTR};
+use windows::Win32::{
+    Foundation::*, Graphics::Gdi::*, Media::Audio::*, Media::MMSYSERR_NOERROR, System::Console::*,
+    UI::Input::KeyboardAndMouse::GetAsyncKeyState, UI::WindowsAndMessaging::wsprintfW,
 };
 
 // endregion
 
 // region: Constants
+
+// ---------------------
+// COLORS
+// ---------------------
 
 /// Black foreground color. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
 pub const FG_BLACK: u16 = 0x0000;
@@ -103,6 +98,10 @@ pub const BG_YELLOW: u16 = 0x00E0;
 /// White background color.
 pub const BG_WHITE: u16 = 0x00F0;
 
+// ---------------------
+// PIXELS
+// ---------------------
+
 /// Solid block pixel. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
 pub const PIXEL_SOLID: u16 = 0x2588;
 /// Three-quarter block pixel.
@@ -114,6 +113,10 @@ pub const PIXEL_QUARTER: u16 = 0x2591;
 /// Empty space (transparent) pixel.
 pub const PIXEL_EMPTY: u16 = 0x20;
 
+// ---------------------
+// MOUSE BUTTONS
+// ---------------------
+
 /// Left mouse button. Used with `mouse_pressed`, `mouse_released`, or `mouse_held`.
 pub const M_LEFT: usize = 0;
 /// Right mouse button.
@@ -124,6 +127,10 @@ pub const M_MIDDLE: usize = 2;
 pub const M_X1: usize = 3;
 /// X2 mouse button (side button 2).
 pub const M_X2: usize = 4;
+
+// ---------------------
+// KEYS
+// ---------------------
 
 /// Space key. Used with `key_pressed`, `key_released`, or `key_held`.
 pub const K_SPACE: usize = 0x20;
@@ -320,6 +327,214 @@ pub const K_RIGHT_BRACE: usize = 0xDD;
 /// Apostrophe / Double Quote key.
 /// Only works with US ANSI Keyboards
 pub const K_APOSTROPHE: usize = 0xDE;
+
+// ---------------------
+// NOTES
+// ---------------------
+
+/// A1 (55.00 Hz). Used with the `AudioEngine`'s `play_note` and `play_notes` functions
+pub const A1: f32 = 55.00;
+/// A2 (110.00 Hz)
+pub const A2: f32 = 110.00;
+/// A3 (220.00 Hz)
+pub const A3: f32 = 220.00;
+/// A4 (440.00 Hz)
+pub const A4: f32 = 440.00;
+/// A5 (880.00 Hz)
+pub const A5: f32 = 880.00;
+/// A6 (1760.00 Hz)
+pub const A6: f32 = 1760.00;
+/// A7 (3520.00 Hz)
+pub const A7: f32 = 3520.00;
+/// A8 (7040.00 Hz)
+pub const A8: f32 = 7040.00;
+
+/// A#1 / Bb1 (58.27 Hz)
+pub const A_SHARP1: f32 = 58.27;
+/// A#2 / Bb2 (116.54 Hz)
+pub const A_SHARP2: f32 = 116.54;
+/// A#3 / Bb3 (233.08 Hz)
+pub const A_SHARP3: f32 = 233.08;
+/// A#4 / Bb4 (466.16 Hz)
+pub const A_SHARP4: f32 = 466.16;
+/// A#5 / Bb5 (932.33 Hz)
+pub const A_SHARP5: f32 = 932.33;
+/// A#6 / Bb6 (1864.66 Hz)
+pub const A_SHARP6: f32 = 1864.66;
+/// A#7 / Bb7 (3729.31 Hz)
+pub const A_SHARP7: f32 = 3729.31;
+/// A#8 / Bb8 (7458.62 Hz)
+pub const A_SHARP8: f32 = 7458.62;
+
+/// B1 (61.74 Hz)
+pub const B1: f32 = 61.74;
+/// B2 (123.47 Hz)
+pub const B2: f32 = 123.47;
+/// B3 (246.94 Hz)
+pub const B3: f32 = 246.94;
+/// B4 (493.88 Hz)
+pub const B4: f32 = 493.88;
+/// B5 (987.77 Hz)
+pub const B5: f32 = 987.77;
+/// B6 (1975.53 Hz)
+pub const B6: f32 = 1975.53;
+/// B7 (3951.07 Hz)
+pub const B7: f32 = 3951.07;
+/// B8 (7902.13 Hz)
+pub const B8: f32 = 7902.13;
+
+/// C1 (32.70 Hz)
+pub const C1: f32 = 32.70;
+/// C2 (65.41 Hz)
+pub const C2: f32 = 65.41;
+/// C3 (130.81 Hz)
+pub const C3: f32 = 130.81;
+/// C4 (261.63 Hz)
+pub const C4: f32 = 261.63;
+/// C5 (523.25 Hz)
+pub const C5: f32 = 523.25;
+/// C6 (1046.50 Hz)
+pub const C6: f32 = 1046.50;
+/// C7 (2093.00 Hz)
+pub const C7: f32 = 2093.00;
+/// C8 (4186.01 Hz)
+pub const C8: f32 = 4186.01;
+
+/// C#1 / Db1 (34.65 Hz)
+pub const C_SHARP1: f32 = 34.65;
+/// C#2 / Db2 (69.30 Hz)
+pub const C_SHARP2: f32 = 69.30;
+/// C#3 / Db3 (138.59 Hz)
+pub const C_SHARP3: f32 = 138.59;
+/// C#4 / Db4 (277.18 Hz)
+pub const C_SHARP4: f32 = 277.18;
+/// C#5 / Db5 (554.37 Hz)
+pub const C_SHARP5: f32 = 554.37;
+/// C#6 / Db6 (1108.73 Hz)
+pub const C_SHARP6: f32 = 1108.73;
+/// C#7 / Db7 (2217.46 Hz)
+pub const C_SHARP7: f32 = 2217.46;
+/// C#8 / Db8 (4434.92 Hz)
+pub const C_SHARP8: f32 = 4434.92;
+
+/// D1 (36.71 Hz)
+pub const D1: f32 = 36.71;
+/// D2 (73.42 Hz)
+pub const D2: f32 = 73.42;
+/// D3 (146.83 Hz)
+pub const D3: f32 = 146.83;
+/// D4 (293.66 Hz)
+pub const D4: f32 = 293.66;
+/// D5 (587.33 Hz)
+pub const D5: f32 = 587.33;
+/// D6 (1174.66 Hz)
+pub const D6: f32 = 1174.66;
+/// D7 (2349.32 Hz)
+pub const D7: f32 = 2349.32;
+/// D8 (4698.63 Hz)
+pub const D8: f32 = 4698.63;
+
+/// D#1 / Eb1 (38.89 Hz)
+pub const D_SHARP1: f32 = 38.89;
+/// D#2 / Eb2 (77.78 Hz)
+pub const D_SHARP2: f32 = 77.78;
+/// D#3 / Eb3 (155.56 Hz)
+pub const D_SHARP3: f32 = 155.56;
+/// D#4 / Eb4 (311.13 Hz)
+pub const D_SHARP4: f32 = 311.13;
+/// D#5 / Eb5 (622.25 Hz)
+pub const D_SHARP5: f32 = 622.25;
+/// D#6 / Eb6 (1244.51 Hz)
+pub const D_SHARP6: f32 = 1244.51;
+/// D#7 / Eb7 (2489.02 Hz)
+pub const D_SHARP7: f32 = 2489.02;
+/// D#8 / Eb8 (4978.03 Hz)
+pub const D_SHARP8: f32 = 4978.03;
+
+/// E1 (41.20 Hz)
+pub const E1: f32 = 41.20;
+/// E2 (82.41 Hz)
+pub const E2: f32 = 82.41;
+/// E3 (164.81 Hz)
+pub const E3: f32 = 164.81;
+/// E4 (329.63 Hz)
+pub const E4: f32 = 329.63;
+/// E5 (659.25 Hz)
+pub const E5: f32 = 659.25;
+/// E6 (1318.51 Hz)
+pub const E6: f32 = 1318.51;
+/// E7 (2637.02 Hz)
+pub const E7: f32 = 2637.02;
+/// E8 (5274.04 Hz)
+pub const E8: f32 = 5274.04;
+
+/// F1 (43.65 Hz)
+pub const F1: f32 = 43.65;
+/// F2 (87.31 Hz)
+pub const F2: f32 = 87.31;
+/// F3 (174.61 Hz)
+pub const F3: f32 = 174.61;
+/// F4 (349.23 Hz)
+pub const F4: f32 = 349.23;
+/// F5 (698.46 Hz)
+pub const F5: f32 = 698.46;
+/// F6 (1396.91 Hz)
+pub const F6: f32 = 1396.91;
+/// F7 (2793.83 Hz)
+pub const F7: f32 = 2793.83;
+/// F8 (5587.65 Hz)
+pub const F8: f32 = 5587.65;
+
+/// F#1 / Gb1 (46.25 Hz)
+pub const F_SHARP1: f32 = 46.25;
+/// F#2 / Gb2 (92.50 Hz)
+pub const F_SHARP2: f32 = 92.50;
+/// F#3 / Gb3 (185.00 Hz)
+pub const F_SHARP3: f32 = 185.00;
+/// F#4 / Gb4 (369.99 Hz)
+pub const F_SHARP4: f32 = 369.99;
+/// F#5 / Gb5 (739.99 Hz)
+pub const F_SHARP5: f32 = 739.99;
+/// F#6 / Gb6 (1479.98 Hz)
+pub const F_SHARP6: f32 = 1479.98;
+/// F#7 / Gb7 (2959.96 Hz)
+pub const F_SHARP7: f32 = 2959.96;
+/// F#8 / Gb8 (5919.91 Hz)
+pub const F_SHARP8: f32 = 5919.91;
+
+/// G1 (49.00 Hz)
+pub const G1: f32 = 49.00;
+/// G2 (98.00 Hz)
+pub const G2: f32 = 98.00;
+/// G3 (196.00 Hz)
+pub const G3: f32 = 196.00;
+/// G4 (392.00 Hz)
+pub const G4: f32 = 392.00;
+/// G5 (783.99 Hz)
+pub const G5: f32 = 783.99;
+/// G6 (1567.98 Hz)
+pub const G6: f32 = 1567.98;
+/// G7 (3135.96 Hz)
+pub const G7: f32 = 3135.96;
+/// G8 (6271.93 Hz)
+pub const G8: f32 = 6271.93;
+
+/// G#1 / Ab1 (51.91 Hz)
+pub const G_SHARP1: f32 = 51.91;
+/// G#2 / Ab2 (103.83 Hz)
+pub const G_SHARP2: f32 = 103.83;
+/// G#3 / Ab3 (207.65 Hz)
+pub const G_SHARP3: f32 = 207.65;
+/// G#4 / Ab4 (415.30 Hz)
+pub const G_SHARP4: f32 = 415.30;
+/// G#5 / Ab5 (830.61 Hz)
+pub const G_SHARP5: f32 = 830.61;
+/// G#6 / Ab6 (1661.22 Hz)
+pub const G_SHARP6: f32 = 1661.22;
+/// G#7 / Ab7 (3322.44 Hz)
+pub const G_SHARP7: f32 = 3322.44;
+/// G#8 / Ab8 (6644.88 Hz)
+pub const G_SHARP8: f32 = 6644.88;
 
 // endregion
 
@@ -549,6 +764,406 @@ impl Sprite {
 
 // endregion
 
+// region: Audio
+
+const CHUNK_SIZE: usize = 512;
+static NOTE_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+#[derive(Clone)]
+enum AudioCommand {
+    LoadSample(String),
+    PlaySample(String),
+    LoadSampleFromBuffer(String, Vec<i16>),
+    NoteOn(f32),
+    NoteOff(f32),
+    Quit,
+}
+
+struct PlayingSound {
+    data: Vec<i16>,
+    cursor: usize,
+}
+
+struct PlayingNote {
+    freq: f32,
+    phase: f32,
+    amplitude: f32,
+    target_amp: f32,
+    step: f32,
+    active: bool,
+}
+
+/// Audio engine used through  the `ConsoleGameEngine`.
+///
+/// Handles asynchronous playback of WAV files and synthesized notes.
+///
+/// Users can interact with it via the audio field in the `ConsoleGameEngine`:
+///
+/// ```rust
+/// engine.audio.load_sample("explosion.wav");
+/// engine.audio.play_sample("explosion.wav");
+/// engine.audio.play_note(A4, 500);
+/// engine.audio.play_notes(&[A4, C_SHARP5, E5], 1000);
+/// engine.audio.note_on(A4);
+/// engine.audio.note_off(A4);
+/// ```
+#[derive(Clone)]
+pub struct AudioEngine {
+    tx: Sender<AudioCommand>,
+}
+
+impl AudioEngine {
+    #[allow(clippy::new_without_default)]
+    fn new() -> Self {
+        let (tx, rx) = mpsc::channel::<AudioCommand>();
+
+        thread::spawn(move || {
+            let format = WAVEFORMATEX {
+                wFormatTag: WAVE_FORMAT_PCM as u16,
+                nChannels: 2,
+                nSamplesPerSec: 44100,
+                nAvgBytesPerSec: 44100 * 2 * 2,
+                nBlockAlign: 4,
+                wBitsPerSample: 16,
+                cbSize: 0,
+            };
+
+            let mut h_waveout = HWAVEOUT::default();
+            unsafe {
+                let res = waveOutOpen(
+                    Some(&mut h_waveout),
+                    WAVE_MAPPER,
+                    &format,
+                    None,
+                    Some(0),
+                    CALLBACK_NULL,
+                );
+
+                if res != MMSYSERR_NOERROR {
+                    eprintln!("Failed to open audio device: {}", res);
+                    return;
+                }
+            }
+
+            let mut samples = HashMap::new();
+            let mut active_sounds = Vec::new();
+            let mut active_notes = Vec::new();
+
+            'audio_loop: loop {
+                while let Ok(cmd) = rx.try_recv() {
+                    match cmd {
+                        AudioCommand::LoadSample(path) => {
+                            if let Ok(data) = AudioEngine::load_wav(&path) {
+                                samples.insert(path, data);
+                            }
+                        }
+                        AudioCommand::LoadSampleFromBuffer(key, buffer) => {
+                            samples.insert(key, buffer);
+                        }
+                        AudioCommand::PlaySample(path) => {
+                            if let Some(data) = samples.get(&path) {
+                                active_sounds.push(PlayingSound {
+                                    data: data.clone(),
+                                    cursor: 0,
+                                });
+                            }
+                        }
+                        AudioCommand::NoteOn(freq) => {
+                            let sample_rate = 44100.0;
+                            let attack_samples = 100;
+                            let mut buffer = vec![0i16; attack_samples * 2];
+                            for i in 0..attack_samples {
+                                let t = i as f32 / sample_rate;
+                                let s = ((2.0 * PI * freq * t).sin() * i16::MAX as f32 * 0.1)
+                                    .clamp(i16::MIN as f32, i16::MAX as f32);
+                                buffer[i * 2] = s as i16;
+                                buffer[i * 2 + 1] = s as i16;
+                            }
+                            AudioEngine::play_buffer(h_waveout, buffer);
+
+                            let attack_ms = 50.0;
+                            let step = 1.0 / (44100.0 * (attack_ms / 1000.0));
+                            active_notes.push(PlayingNote {
+                                freq,
+                                phase: 0.0,
+                                amplitude: 0.0,
+                                target_amp: 1.0,
+                                step,
+                                active: true,
+                            });
+                        }
+                        AudioCommand::NoteOff(freq) => {
+                            let sample_rate = 44100.0;
+                            let release_samples = 100;
+                            let mut buffer = vec![0i16; release_samples * 2];
+
+                            for i in 0..release_samples {
+                                let t = i as f32 / sample_rate;
+                                let s = ((2.0 * PI * freq * t).sin() * i16::MAX as f32 * 0.05)
+                                    .clamp(i16::MIN as f32, i16::MAX as f32);
+                                buffer[i * 2] = s as i16;
+                                buffer[i * 2 + 1] = s as i16;
+                            }
+                            AudioEngine::play_buffer(h_waveout, buffer);
+
+                            for note in active_notes.iter_mut() {
+                                if (note.freq - freq).abs() < f32::EPSILON && note.active {
+                                    let release_ms = 50.0;
+                                    note.target_amp = 0.0;
+                                    note.step = -(1.0 / (44100.0 * (release_ms / 1000.0)));
+                                }
+                            }
+                        }
+                        AudioCommand::Quit => break 'audio_loop,
+                    }
+                }
+
+                let mut mix_buffer = vec![0i32; CHUNK_SIZE * 2];
+
+                for sound in active_sounds.iter_mut() {
+                    for i in 0..CHUNK_SIZE {
+                        let idx = i * 2;
+                        if sound.cursor + 1 < sound.data.len() {
+                            mix_buffer[idx] += sound.data[sound.cursor] as i32;
+                            mix_buffer[idx + 1] += sound.data[sound.cursor + 1] as i32;
+                            sound.cursor += 2;
+                        }
+                    }
+                }
+
+                let sample_rate = 44100.0;
+                let max_notes = active_notes.len().max(1) as f32;
+
+                for note in active_notes.iter_mut().filter(|n| n.active) {
+                    let step = 2.0 * PI * note.freq / sample_rate;
+
+                    for i in 0..CHUNK_SIZE {
+                        let idx = i * 2;
+
+                        if (note.step > 0.0 && note.amplitude < note.target_amp)
+                            || (note.step < 0.0 && note.amplitude > note.target_amp)
+                        {
+                            note.amplitude = (note.amplitude + note.step).clamp(0.0, 1.0);
+                        } else if note.target_amp == 0.0 {
+                            note.active = false;
+                        }
+
+                        let s = (note.phase).sin() * note.amplitude * (0.3 / max_notes);
+
+                        note.phase += step;
+                        if note.phase > PI * 2.0 {
+                            note.phase -= PI * 2.0;
+                        }
+
+                        let si = (s * i16::MAX as f32) as i16;
+                        mix_buffer[idx] += si as i32;
+                        mix_buffer[idx + 1] += si as i32;
+                    }
+                }
+
+                let final_buffer: Vec<i16> = mix_buffer
+                    .into_iter()
+                    .map(|s| s.clamp(i16::MIN as i32, i16::MAX as i32) as i16)
+                    .collect();
+
+                AudioEngine::play_buffer(h_waveout, final_buffer);
+
+                active_sounds.retain(|s| s.cursor < s.data.len());
+                active_notes.retain(|n| n.active);
+
+                thread::sleep(std::time::Duration::from_millis(10));
+            }
+        });
+
+        Self { tx }
+    }
+
+    /// Loads a WAV file asynchronously.
+    ///
+    /// The sample can later be played using `play_sample`.
+    /// The path is used as the key to identify the sample.
+    /// Normally used in the `create` function when implementing the `ConsoleGame` trait.
+    pub fn load_sample<P: AsRef<Path>>(&self, path: P) {
+        let _ = self.tx.send(AudioCommand::LoadSample(
+            path.as_ref().to_string_lossy().into(),
+        ));
+    }
+
+    /// Plays a previously loaded sample asynchronously.
+    ///
+    /// Multiple instances of the same sample can play simultaneously.
+    pub fn play_sample<P: AsRef<Path>>(&self, path: P) {
+        let _ = self.tx.send(AudioCommand::PlaySample(
+            path.as_ref().to_string_lossy().into(),
+        ));
+    }
+
+    /// Generates and plays a single note of the given frequency (Hz) and duration (ms).
+    ///
+    /// Useful for procedural audio or simple effects.
+    /// Normally used in conjunction with the note constants (A4, C_SHARP5, E5)
+    pub fn play_note(&self, frequency: f32, duration_ms: u32) {
+        let sample_rate = 44100;
+        let sample_count = ((duration_ms as f32 / 1000.0) * sample_rate as f32) as usize;
+        if sample_count == 0 {
+            return;
+        }
+
+        let mut mono = vec![0f32; sample_count];
+        for (n, v) in mono.iter_mut().enumerate() {
+            let t = n as f32 / sample_rate as f32;
+            *v = (t * frequency * 2.0 * PI).sin();
+        }
+
+        Self::apply_attack_release(&mut mono, sample_rate, duration_ms);
+
+        let mut stereo = vec![0i16; sample_count * 2];
+        let scale = 0.95;
+        for (n, &v) in mono.iter().enumerate() {
+            let s = (v * scale * i16::MAX as f32).clamp(i16::MIN as f32, i16::MAX as f32);
+            let si = s as i16;
+            stereo[n * 2] = si;
+            stereo[n * 2 + 1] = si;
+        }
+
+        let key = Self::generate_unique_key();
+        let _ = self
+            .tx
+            .send(AudioCommand::LoadSampleFromBuffer(key.clone(), stereo));
+        let _ = self.tx.send(AudioCommand::PlaySample(key));
+    }
+
+    /// Generates and plays multiple notes simultaneously (like a chord).
+    ///
+    /// Each frequency in `freqs` is mixed together, scaled to avoid clipping,
+    /// and played for the given duration (ms).
+    /// Normally used in conjunction with the note constants (A4, C_SHARP5, E5)
+    pub fn play_notes(&self, freqs: &[f32], duration_ms: u32) {
+        if freqs.is_empty() {
+            return;
+        }
+        let sample_rate = 44100u32;
+        let sample_count = ((duration_ms as f32 / 1000.0) * sample_rate as f32) as usize;
+        if sample_count == 0 {
+            return;
+        }
+
+        let mut mono = vec![0f32; sample_count];
+        for &freq in freqs {
+            for (n, v) in mono.iter_mut().enumerate() {
+                let t = n as f32 / sample_rate as f32;
+                *v += (t * freq * 2.0 * PI).sin();
+            }
+        }
+
+        let max_possible = freqs.len() as f32;
+        let scale = 0.9 / max_possible;
+        for v in mono.iter_mut() {
+            *v *= scale;
+        }
+
+        Self::apply_attack_release(&mut mono, sample_rate, duration_ms);
+
+        let mut stereo = vec![0i16; sample_count * 2];
+        for (n, &v) in mono.iter().enumerate() {
+            let s = (v * i16::MAX as f32).clamp(i16::MIN as f32, i16::MAX as f32);
+            let si = s as i16;
+            stereo[n * 2] = si;
+            stereo[n * 2 + 1] = si;
+        }
+
+        let key = Self::generate_unique_key();
+        let _ = self
+            .tx
+            .send(AudioCommand::LoadSampleFromBuffer(key.clone(), stereo));
+        let _ = self.tx.send(AudioCommand::PlaySample(key));
+    }
+
+    /// Starts playing a note of the given frequency (Hz) immediately.
+    ///
+    /// Normally used in conjunction with the note constants (A4, C_SHARP5, E5)
+    pub fn note_on(&self, freq: f32) {
+        let _ = self.tx.send(AudioCommand::NoteOn(freq));
+    }
+
+    /// Stops a previously started note of the given frequency (Hz).
+    ///
+    /// Normally used in conjunction with the note constants (A4, C_SHARP5, E5)
+    /// and with `note_on` to control sustained notes.
+    pub fn note_off(&self, freq: f32) {
+        let _ = self.tx.send(AudioCommand::NoteOff(freq));
+    }
+
+    fn apply_attack_release(buffer: &mut [f32], sample_rate: u32, duration_ms: u32) {
+        let len = buffer.len();
+        if len == 0 {
+            return;
+        }
+
+        let ramp_pct = 0.10;
+        let ramp_samps =
+            ((duration_ms as f32 / 1000.0) * sample_rate as f32 * ramp_pct).round() as usize;
+        let ramp_samps = ramp_samps.min(len / 2);
+
+        for (i, v) in buffer.iter_mut().take(ramp_samps).enumerate() {
+            *v *= i as f32 / ramp_samps.max(1) as f32;
+        }
+
+        for i in 0..ramp_samps {
+            let idx = len - ramp_samps + i;
+            buffer[idx] *= 1.0 - (i as f32 / ramp_samps as f32);
+        }
+    }
+
+    fn generate_unique_key() -> String {
+        let id = NOTE_COUNTER.fetch_add(1, Relaxed);
+        format!("__temp_notes_{}", id)
+    }
+
+    fn load_wav(path: &str) -> std::io::Result<Vec<i16>> {
+        let mut file = File::open(path)?;
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf)?;
+
+        let data_start = buf.windows(4).position(|w| w == b"data").unwrap() + 8;
+        let samples: Vec<i16> = buf[data_start..]
+            .chunks_exact(2)
+            .map(|b| i16::from_le_bytes([b[0], b[1]]))
+            .collect();
+
+        Ok(samples)
+    }
+
+    fn play_buffer(h_waveout: HWAVEOUT, data: Vec<i16>) {
+        let boxed_data = Box::new(data);
+        let raw_data = Box::into_raw(boxed_data);
+
+        let mut hdr = Box::new(WAVEHDR {
+            lpData: PSTR(unsafe { (*raw_data).as_ptr() as *mut u8 }),
+            dwBufferLength: (unsafe { (*raw_data).len() * 2 } as u32),
+            dwFlags: 0,
+            dwLoops: 0,
+            dwUser: raw_data as usize,
+            ..Default::default()
+        });
+
+        unsafe {
+            waveOutPrepareHeader(h_waveout, &mut *hdr, std::mem::size_of::<WAVEHDR>() as u32);
+            waveOutWrite(h_waveout, &mut *hdr, std::mem::size_of::<WAVEHDR>() as u32);
+        }
+
+        let _ = Box::into_raw(hdr);
+    }
+}
+
+impl Drop for AudioEngine {
+    fn drop(&mut self) {
+        let _ = self.tx.send(AudioCommand::Quit);
+    }
+}
+
+// endregion
+
 // region: Engine
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
@@ -644,9 +1259,9 @@ pub struct ConsoleGameEngine<G: ConsoleGame> {
     screen_width: i16,
     screen_height: i16,
 
-    // TODO: add sound
-    // enable_sound: bool
     window_buffer: Vec<CHAR_INFO>,
+
+    pub audio: AudioEngine,
 
     game: Option<G>,
 }
@@ -700,6 +1315,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
             screen_width: 80,
             screen_height: 80,
             window_buffer,
+            audio: AudioEngine::new(),
             game: Some(game),
         }
     }

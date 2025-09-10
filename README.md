@@ -16,7 +16,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 ## 🛠 Roadmap
 - [x] Publish to crates.io (available [here](https://crates.io/crates/rusty_console_game_engine))
 - [x] Documentation
-- [ ] Audio support
+- [x] Audio support
 - [x] Image → sprite converter (available [here](https://github.com/rip-super/image-to-sprite-converter))
 - [ ] Cross-platform support
 
@@ -26,7 +26,7 @@ Add the engine to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty_console_game_engine = "0.2.1"
+rusty_console_game_engine = "0.3.0"
 ```
 
 Then create a game:
@@ -68,3 +68,5 @@ Open `conhost.exe` (in the repo root) before running an example.
 [Mazes](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/mazes.rs) – Maze generator and renderer
 
 [Raycaster](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/raycaster.rs) - Simple raycasted world to explore
+
+[Piano](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/piano.rs) - Piano to play different notes

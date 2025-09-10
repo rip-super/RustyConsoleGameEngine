@@ -90,7 +90,7 @@ dependencies = [
 
 [[package]]
 name = "rusty_console_game_engine"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "rand",
  "windows",
