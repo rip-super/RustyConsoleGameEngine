@@ -19,6 +19,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - [x] Audio support
 - [x] Image → sprite converter (available [here](https://github.com/rip-super/image-to-sprite-converter))
 - [ ] Cross-platform support
+- [ ] Clean up code (Convert constants to enums)
 
 ## 🚀 Quickstart
 
