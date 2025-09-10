@@ -18,7 +18,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - [x] Publish to crates.io (available [here](https://crates.io/crates/rusty_console_game_engine))
 - [x] Documentation
 - [x] Audio support
-- [x] Image → sprite converter (available [here](https://github.com/rip-super/image-to-sprite-converter))
+- [ ] Image → sprite converter
 - [ ] Cross-platform support
 - [ ] Clean up code (Convert constants to enums)
 
