@@ -12,6 +12,7 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - Basic Console Rendering (text, colors, and shapes)
 - Sprites (.spr format)
 - Keyboard & mouse input
+- Audio support (.wav files and arbitrary frequencies)
 
 ## 🛠 Roadmap
 - [x] Publish to crates.io (available [here](https://crates.io/crates/rusty_console_game_engine))
