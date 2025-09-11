@@ -611,6 +611,21 @@ pub mod note {
 
 // region: Prelude
 
+/// The `prelude` re-exports the most commonly used items in the engine,
+/// making it easy to get started without digging through individual modules.
+///
+/// Importing the prelude:
+/// ```
+/// use rusty_console_game_engine::prelude::*;
+/// ```
+///
+/// This brings in:
+/// - Core engine types ([`ConsoleGame`], [`ConsoleGameEngine`], and [`Sprite`])
+/// - Common colors and pixels for drawing
+/// - Frequently used keys and mouse buttons
+/// - A couple of note frequencies for quick audio testing
+///
+/// The goal is that a simple game can be written with only the prelude.
 pub mod prelude {
     pub use crate::ConsoleGame;
     pub use crate::ConsoleGameEngine;
@@ -624,7 +639,7 @@ pub mod prelude {
 
     pub use crate::mouse_button::{LEFT, MIDDLE, RIGHT};
 
-    pub use crate::note::{A4, C4};
+    pub use crate::note::{A4, B4, C4, D4, E4, F4, G4};
 }
 
 // endregion

@@ -20,7 +20,6 @@ A Rust port of the [olcConsoleGameEngine](https://github.com/OneLoneCoder/Javidx
 - [x] Audio support
 - [ ] Image → sprite converter
 - [ ] Cross-platform support
-- [ ] Clean up code (Convert constants to enums)
 
 ## 🚀 Quickstart
 
@@ -28,12 +27,12 @@ Add the engine to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rusty_console_game_engine = "0.3.0"
+rusty_console_game_engine = "0.4.0"
 ```
 
 Then create a game:
 ```rust
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
 
 struct Demo;
 
