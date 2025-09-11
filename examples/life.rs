@@ -23,6 +23,10 @@ impl GameOfLife {
 }
 
 impl ConsoleGame for GameOfLife {
+    fn app_name(&self) -> &str {
+        "Game Of Life"
+    }
+
     fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
         let size = (engine.screen_width() * engine.screen_height()) as usize;
         self.output = vec![0; size];
@@ -98,7 +102,6 @@ impl ConsoleGame for GameOfLife {
 
 fn main() {
     let mut game = ConsoleGameEngine::new(GameOfLife::new());
-    game.set_app_name("Game Of Life");
     game.construct_console(160, 100, 8, 8)
         .expect("Console Construction Failed");
     game.start();

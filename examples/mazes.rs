@@ -36,6 +36,10 @@ impl Maze {
 }
 
 impl ConsoleGame for Maze {
+    fn app_name(&self) -> &str {
+        "Maze"
+    }
+
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
         self.maze_width = 40;
         self.maze_height = 25;
@@ -209,7 +213,6 @@ impl ConsoleGame for Maze {
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(Maze::new());
-    engine.set_app_name("Mazes");
     engine
         .construct_console(160, 100, 8, 8)
         .expect("Console Construction Failed");

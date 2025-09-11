@@ -29,6 +29,10 @@ impl Racer {
 }
 
 impl ConsoleGame for Racer {
+    fn app_name(&self) -> &str {
+        "Racer"
+    }
+
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
         self.track.push((0.0, 10.0));
         self.track.push((0.0, 200.0));
@@ -259,7 +263,6 @@ impl ConsoleGame for Racer {
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(Racer::default());
-    engine.set_app_name("Racer");
     engine
         .construct_console(160, 100, 8, 8)
         .expect("Console Construction Failed");

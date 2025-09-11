@@ -59,6 +59,10 @@ impl Engine3D {
 }
 
 impl ConsoleGame for Engine3D {
+    fn app_name(&self) -> &str {
+        "Cube"
+    }
+
     fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
         nofmt!(
             self.mesh_cube.tris = vec![
@@ -163,7 +167,6 @@ impl ConsoleGame for Engine3D {
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(Engine3D::new());
-    engine.set_app_name("Cube");
     engine
         .construct_console(256, 240, 4, 4)
         .expect("Console Construction Failed");

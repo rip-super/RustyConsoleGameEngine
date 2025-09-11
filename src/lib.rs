@@ -1180,6 +1180,10 @@ unsafe extern "system" fn console_handler(ctrl_type: u32) -> BOOL {
 /// To create a game, define a struct containing your game state and implement this trait
 /// for it. The engine will call the provided methods during the game loop.
 pub trait ConsoleGame: Sized {
+    fn app_name(&self) -> &str {
+        "Default"
+    }
+
     /// Called once when the game starts.
     ///
     /// Use this method to initialize your game state, load sprites, set variables, etc.
@@ -1274,7 +1278,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
     /// # Parameters
     /// * `game` - The user-defined struct implementing `ConsoleGame`.
     pub fn new(game: G) -> Self {
-        let app_name = "Default".to_string();
+        let app_name = game.app_name().to_string();
         let mouse_x = 0;
         let mouse_y = 0;
         let output_handle = unsafe {
@@ -1318,14 +1322,6 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
             audio: AudioEngine::new(),
             game: Some(game),
         }
-    }
-
-    /// Sets the console window title.
-    ///
-    /// # Parameters
-    /// * `app_name` - Title to display in the console window.
-    pub fn set_app_name(&mut self, app_name: &str) {
-        self.app_name = app_name.to_string();
     }
 
     /// Returns the width of the console in characters.

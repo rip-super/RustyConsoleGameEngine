@@ -32,6 +32,10 @@ impl Piano {
 }
 
 impl ConsoleGame for Piano {
+    fn app_name(&self) -> &str {
+        "Piano"
+    }
+
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
         true
     }
@@ -68,7 +72,6 @@ impl ConsoleGame for Piano {
 
 fn main() {
     let mut game = ConsoleGameEngine::new(Piano::new());
-    game.set_app_name("Rust Piano");
     game.construct_console(51, 15, 16, 16)
         .expect("Console Construction Failed");
     game.start();

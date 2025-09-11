@@ -49,6 +49,10 @@ impl Raycaster {
 }
 
 impl ConsoleGame for Raycaster {
+    fn app_name(&self) -> &str {
+        "Raycaster"
+    }
+
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
         true
     }
@@ -224,7 +228,6 @@ impl ConsoleGame for Raycaster {
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(Raycaster::new());
-    engine.set_app_name("Raycaster");
     engine
         .construct_console(200, 100, 8, 8)
         .expect("Console Construction Failed");

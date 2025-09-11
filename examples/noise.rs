@@ -94,6 +94,10 @@ impl PerlinNoise {
 }
 
 impl ConsoleGame for PerlinNoise {
+    fn app_name(&self) -> &str {
+        "Perlin Noise"
+    }
+
     fn create(&mut self, engine: &mut ConsoleGameEngine<Self>) -> bool {
         self.output_width = engine.screen_width() as usize;
         self.output_height = engine.screen_height() as usize;
@@ -252,7 +256,6 @@ impl ConsoleGame for PerlinNoise {
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(PerlinNoise::new());
-    engine.set_app_name("Perlin Noise");
     engine
         .construct_console(256, 256, 3, 3)
         .expect("Console Construction Failed");
