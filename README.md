@@ -38,7 +38,7 @@ struct Demo;
 
 impl ConsoleGame for Demo {
     fn app_name(&self) -> &str {
-        "Example"
+        "Demo"
     }
 
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
