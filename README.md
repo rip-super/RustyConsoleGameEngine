@@ -37,6 +37,10 @@ use rusty_console_game_engine::prelude::*;
 struct Demo;
 
 impl ConsoleGame for Demo {
+    fn app_name(&self) -> &str {
+        "Example"
+    }
+
     fn create(&mut self, _engine: &mut ConsoleGameEngine<Self>) -> bool {
         true
     }
@@ -45,14 +49,19 @@ impl ConsoleGame for Demo {
         engine.clear(FG_BLACK);
         engine.fill_circle(engine.mouse_x(), engine.mouse_y(), 5);
 
+        if engine.key_pressed(SPACE) {
+            engine.audio.play_note(D4, 500);
+        }
+
         true
     }
 }
 
 fn main() {
     let mut engine = ConsoleGameEngine::new(Demo);
-    engine.set_app_name("Example");
-    engine.construct_console(150, 150, 4, 4).expect("Console Construction Failed");
+    engine
+        .construct_console(150, 150, 4, 4)
+        .expect("Console Construction Failed");
     engine.start();
 }
 ```
@@ -71,3 +80,5 @@ Open `conhost.exe` (in the repo root) before running an example.
 [Raycaster](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/raycaster.rs) - Simple raycasted world to explore
 
 [Piano](https://github.com/rip-super/RustyConsoleGameEngine/blob/main/examples/piano.rs) - Piano to play different notes
+
+## If you find any bugs, feel free to open an [issue](https://github.com/rip-super/RustyConsoleGameEngine/issues) or a [pull request!](https://github.com/rip-super/RustyConsoleGameEngine/pulls)
