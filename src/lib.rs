@@ -28,513 +28,604 @@ use windows::Win32::{
 
 // region: Constants
 
-// ---------------------
-// COLORS
-// ---------------------
+/// Provides convenient constants for foreground and background colors.
+///
+/// These values can be combined with pixel densities
+/// (see [`pixel`]) when calling drawing functions like:
+/// `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
+///
+/// # Examples
+///
+/// ```rust
+/// use rusty_console_game_engine::*;
+///
+/// engine.clear(BG_BLACK);
+/// engine.draw_with(0, 0, FG_WHITE, SOLID);
+/// ```
+pub mod color {
+    /// Black foreground color.
+    pub const FG_BLACK: u16 = 0x0000;
+    /// Dark blue foreground color.
+    pub const FG_DARK_BLUE: u16 = 0x0001;
+    /// Dark green foreground color.
+    pub const FG_DARK_GREEN: u16 = 0x0002;
+    /// Dark cyan foreground color.
+    pub const FG_DARK_CYAN: u16 = 0x0003;
+    /// Dark red foreground color.
+    pub const FG_DARK_RED: u16 = 0x0004;
+    /// Dark magenta foreground color.
+    pub const FG_DARK_MAGENTA: u16 = 0x0005;
+    /// Dark yellow foreground color.
+    pub const FG_DARK_YELLOW: u16 = 0x0006;
+    /// Grey foreground color.
+    pub const FG_GREY: u16 = 0x0007;
+    /// Dark grey foreground color.
+    pub const FG_DARK_GREY: u16 = 0x0008;
+    /// Blue foreground color.
+    pub const FG_BLUE: u16 = 0x0009;
+    /// Green foreground color.
+    pub const FG_GREEN: u16 = 0x000A;
+    /// Cyan foreground color.
+    pub const FG_CYAN: u16 = 0x000B;
+    /// Red foreground color.
+    pub const FG_RED: u16 = 0x000C;
+    /// Magenta foreground color.
+    pub const FG_MAGENTA: u16 = 0x000D;
+    /// Yellow foreground color.
+    pub const FG_YELLOW: u16 = 0x000E;
+    /// White foreground color.
+    pub const FG_WHITE: u16 = 0x000F;
 
-/// Black foreground color. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
-pub const FG_BLACK: u16 = 0x0000;
-/// Dark blue foreground color.
-pub const FG_DARK_BLUE: u16 = 0x0001;
-/// Dark green foreground color.
-pub const FG_DARK_GREEN: u16 = 0x0002;
-/// Dark cyan foreground color.
-pub const FG_DARK_CYAN: u16 = 0x0003;
-/// Dark red foreground color.
-pub const FG_DARK_RED: u16 = 0x0004;
-/// Dark magenta foreground color.
-pub const FG_DARK_MAGENTA: u16 = 0x0005;
-/// Dark yellow foreground color.
-pub const FG_DARK_YELLOW: u16 = 0x0006;
-/// Grey foreground color.
-pub const FG_GREY: u16 = 0x0007;
-/// Dark grey foreground color.
-pub const FG_DARK_GREY: u16 = 0x0008;
-/// Blue foreground color.
-pub const FG_BLUE: u16 = 0x0009;
-/// Green foreground color.
-pub const FG_GREEN: u16 = 0x000A;
-/// Cyan foreground color.
-pub const FG_CYAN: u16 = 0x000B;
-/// Red foreground color.
-pub const FG_RED: u16 = 0x000C;
-/// Magenta foreground color.
-pub const FG_MAGENTA: u16 = 0x000D;
-/// Yellow foreground color.
-pub const FG_YELLOW: u16 = 0x000E;
-/// White foreground color.
-pub const FG_WHITE: u16 = 0x000F;
+    /// Black background color.
+    pub const BG_BLACK: u16 = 0x0000;
+    /// Dark blue background color.
+    pub const BG_DARK_BLUE: u16 = 0x0010;
+    /// Dark green background color.
+    pub const BG_DARK_GREEN: u16 = 0x0020;
+    /// Dark cyan background color.
+    pub const BG_DARK_CYAN: u16 = 0x0030;
+    /// Dark red background color.
+    pub const BG_DARK_RED: u16 = 0x0040;
+    /// Dark magenta background color.
+    pub const BG_DARK_MAGENTA: u16 = 0x0050;
+    /// Dark yellow background color.
+    pub const BG_DARK_YELLOW: u16 = 0x0060;
+    /// Grey background color.
+    pub const BG_GREY: u16 = 0x0070;
+    /// Dark grey background color.
+    pub const BG_DARK_GREY: u16 = 0x0080;
+    /// Blue background color.
+    pub const BG_BLUE: u16 = 0x0090;
+    /// Green background color.
+    pub const BG_GREEN: u16 = 0x00A0;
+    /// Cyan background color.
+    pub const BG_CYAN: u16 = 0x00B0;
+    /// Red background color.
+    pub const BG_RED: u16 = 0x00C0;
+    /// Magenta background color.
+    pub const BG_MAGENTA: u16 = 0x00D0;
+    /// Yellow background color.
+    pub const BG_YELLOW: u16 = 0x00E0;
+    /// White background color.
+    pub const BG_WHITE: u16 = 0x00F0;
+}
 
-/// Black background color. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
-pub const BG_BLACK: u16 = 0x0000;
-/// Dark blue background color.
-pub const BG_DARK_BLUE: u16 = 0x0010;
-/// Dark green background color.
-pub const BG_DARK_GREEN: u16 = 0x0020;
-/// Dark cyan background color.
-pub const BG_DARK_CYAN: u16 = 0x0030;
-/// Dark red background color.
-pub const BG_DARK_RED: u16 = 0x0040;
-/// Dark magenta background color.
-pub const BG_DARK_MAGENTA: u16 = 0x0050;
-/// Dark yellow background color.
-pub const BG_DARK_YELLOW: u16 = 0x0060;
-/// Grey background color.
-pub const BG_GREY: u16 = 0x0070;
-/// Dark grey background color.
-pub const BG_DARK_GREY: u16 = 0x0080;
-/// Blue background color.
-pub const BG_BLUE: u16 = 0x0090;
-/// Green background color.
-pub const BG_GREEN: u16 = 0x00A0;
-/// Cyan background color.
-pub const BG_CYAN: u16 = 0x00B0;
-/// Red background color.
-pub const BG_RED: u16 = 0x00C0;
-/// Magenta background color.
-pub const BG_MAGENTA: u16 = 0x00D0;
-/// Yellow background color.
-pub const BG_YELLOW: u16 = 0x00E0;
-/// White background color.
-pub const BG_WHITE: u16 = 0x00F0;
+/// Provides convenient Unicode pixel constants for drawing.
+///
+/// These constants map to block characters commonly used in terminal graphics.
+/// They can be used in conjunction with foreground and background colors
+/// (see [`color`]) when calling drawing functions.
+///
+/// # Examples
+///
+/// ```rust
+/// use rusty_console_game_engine::*;
+///
+/// engine.draw(10, 5, SOLID, FG_RED | BG_BLACK);
+/// engine.draw(11, 5, HALF, FG_BLUE | BG_BLACK);
+/// ```
+pub mod pixel {
+    /// Solid block pixel.
+    pub const SOLID: u16 = 0x2588;
+    /// Three-quarter block pixel.
+    pub const THREE_QUARTERS: u16 = 0x2593;
+    /// Half block pixel.
+    pub const HALF: u16 = 0x2592;
+    /// Quarter block pixel.
+    pub const QUARTER: u16 = 0x2591;
+    /// Empty space (transparent) pixel.
+    pub const EMPTY: u16 = 0x20;
+}
 
-// ---------------------
-// PIXELS
-// ---------------------
+/// Provides constants for mouse button input.
+///
+/// These constants are used with input functions like
+/// `mouse_pressed()`, `mouse_released()`, and `mouse_held()`.
+///
+/// # Examples
+///
+/// ```rust
+/// use rusty_console_game_engine::*;
+///
+/// if engine.mouse_pressed(mouse_button::LEFT) {
+///     engine.draw_string(0, 0, "Left click!");
+/// }
+/// ```
+pub mod mouse_button {
+    /// Left mouse button. Used with `mouse_pressed`, `mouse_released`, or `mouse_held`.
+    pub const LEFT: usize = 0;
+    /// Right mouse button.
+    pub const RIGHT: usize = 1;
+    /// Middle mouse button.
+    pub const MIDDLE: usize = 2;
+    /// X1 mouse button (side button 1).
+    pub const X1: usize = 3;
+    /// X2 mouse button (side button 2).
+    pub const X2: usize = 4;
+}
 
-/// Solid block pixel. Used in drawing functions like `draw_with`, `draw_string_with`, `fill_rect_with`, `clear`, etc.
-pub const PIXEL_SOLID: u16 = 0x2588;
-/// Three-quarter block pixel.
-pub const PIXEL_THREEQUARTERS: u16 = 0x2593;
-/// Half block pixel.
-pub const PIXEL_HALF: u16 = 0x2592;
-/// Quarter block pixel.
-pub const PIXEL_QUARTER: u16 = 0x2591;
-/// Empty space (transparent) pixel.
-pub const PIXEL_EMPTY: u16 = 0x20;
+/// Provides constants for keyboard input.
+///
+/// These constants represent common keys and are used with input
+/// functions like `key_pressed()`, `key_released()`, and `key_held()`.
+///
+/// # Examples
+///
+/// ```rust
+/// use rusty_console_game_engine::*;
+///
+/// if engine.key_held(key::LEFT) {
+///     engine.draw_string(0, 0, "Moving left!");
+/// }
+///
+/// if engine.key_pressed(key::SPACE) {
+///     engine.draw_string(0, 1, "Jump!");
+/// }
+/// ```
+pub mod key {
+    /// Space key. Used with `key_pressed`, `key_released`, or `key_held`.
+    pub const SPACE: usize = 0x20;
+    /// Enter key.
+    pub const ENTER: usize = 0x0D;
+    /// Escape key.
+    pub const ESCAPE: usize = 0x1B;
+    /// Backspace key.
+    pub const BACKSPACE: usize = 0x08;
+    /// Tab key.
+    pub const TAB: usize = 0x09;
+    /// Shift key.
+    pub const SHIFT: usize = 0x10;
+    /// Control key.
+    pub const CONTROL: usize = 0x11;
+    /// Alt key.
+    pub const ALT: usize = 0x12;
+    /// Caps Lock key.
+    pub const CAPSLOCK: usize = 0x14;
+    /// Num Lock key.
+    pub const NUMLOCK: usize = 0x90;
+    /// Scroll Lock key.
+    pub const SCROLL_LOCK: usize = 0x91;
 
-// ---------------------
-// MOUSE BUTTONS
-// ---------------------
+    /// Up arrow key.
+    pub const ARROW_UP: usize = 0x26;
+    /// Down arrow key.
+    pub const ARROW_DOWN: usize = 0x28;
+    /// Left arrow key.
+    pub const ARROW_LEFT: usize = 0x25;
+    /// Right arrow key.
+    pub const ARROW_RIGHT: usize = 0x27;
 
-/// Left mouse button. Used with `mouse_pressed`, `mouse_released`, or `mouse_held`.
-pub const M_LEFT: usize = 0;
-/// Right mouse button.
-pub const M_RIGHT: usize = 1;
-/// Middle mouse button.
-pub const M_MIDDLE: usize = 2;
-/// X1 mouse button (side button 1).
-pub const M_X1: usize = 3;
-/// X2 mouse button (side button 2).
-pub const M_X2: usize = 4;
+    /// F1 function key.
+    pub const F1: usize = 0x70;
+    /// F2 function key.
+    pub const F2: usize = 0x71;
+    /// F3 function key.
+    pub const F3: usize = 0x72;
+    /// F4 function key.
+    pub const F4: usize = 0x73;
+    /// F5 function key.
+    pub const F5: usize = 0x74;
+    /// F6 function key.
+    pub const F6: usize = 0x75;
+    /// F7 function key.
+    pub const F7: usize = 0x76;
+    /// F8 function key.
+    pub const F8: usize = 0x77;
+    /// F9 function key.
+    pub const F9: usize = 0x78;
+    /// F10 function key.
+    pub const F10: usize = 0x79;
+    /// F11 function key.
+    pub const F11: usize = 0x7A;
+    /// F12 function key.
+    pub const F12: usize = 0x7B;
 
-// ---------------------
-// KEYS
-// ---------------------
+    /// Number 0 key.
+    pub const ZERO: usize = 0x30;
+    /// Number 1 key.
+    pub const ONE: usize = 0x31;
+    /// Number 2 key.
+    pub const TWO: usize = 0x32;
+    /// Number 3 key.
+    pub const THREE: usize = 0x33;
+    /// Number 4 key.
+    pub const FOUR: usize = 0x34;
+    /// Number 5 key.
+    pub const FIVE: usize = 0x35;
+    /// Number 6 key.
+    pub const SIX: usize = 0x36;
+    /// Number 7 key.
+    pub const SEVEN: usize = 0x37;
+    /// Number 8 key.
+    pub const EIGHT: usize = 0x38;
+    /// Number 9 key.
+    pub const NINE: usize = 0x39;
 
-/// Space key. Used with `key_pressed`, `key_released`, or `key_held`.
-pub const K_SPACE: usize = 0x20;
-/// Enter key.
-pub const K_ENTER: usize = 0x0D;
-/// Escape key.
-pub const K_ESCAPE: usize = 0x1B;
-/// Backspace key.
-pub const K_BACKSPACE: usize = 0x08;
-/// Tab key.
-pub const K_TAB: usize = 0x09;
-/// Shift key.
-pub const K_SHIFT: usize = 0x10;
-/// Control key.
-pub const K_CONTROL: usize = 0x11;
-/// Alt key.
-pub const K_ALT: usize = 0x12;
-/// Caps Lock key.
-pub const K_CAPSLOCK: usize = 0x14;
-/// Num Lock key.
-pub const K_NUMLOCK: usize = 0x90;
-/// Scroll Lock key.
-pub const K_SCROLL_LOCK: usize = 0x91;
+    /// Letter A key.
+    pub const A: usize = 0x41;
+    /// Letter B key.
+    pub const B: usize = 0x42;
+    /// Letter C key.
+    pub const C: usize = 0x43;
+    /// Letter D key.
+    pub const D: usize = 0x44;
+    /// Letter E key.
+    pub const E: usize = 0x45;
+    /// Letter F key.
+    pub const F: usize = 0x46;
+    /// Letter G key.
+    pub const G: usize = 0x47;
+    /// Letter H key.
+    pub const H: usize = 0x48;
+    /// Letter I key.
+    pub const I: usize = 0x49;
+    /// Letter J key.
+    pub const J: usize = 0x4A;
+    /// Letter K key.
+    pub const K: usize = 0x4B;
+    /// Letter L key.
+    pub const L: usize = 0x4C;
+    /// Letter M key.
+    pub const M: usize = 0x4D;
+    /// Letter N key.
+    pub const N: usize = 0x4E;
+    /// Letter O key.
+    pub const O: usize = 0x4F;
+    /// Letter P key.
+    pub const P: usize = 0x50;
+    /// Letter Q key.
+    pub const Q: usize = 0x51;
+    /// Letter R key.
+    pub const R: usize = 0x52;
+    /// Letter S key.
+    pub const S: usize = 0x53;
+    /// Letter T key.
+    pub const T: usize = 0x54;
+    /// Letter U key.
+    pub const U: usize = 0x55;
+    /// Letter V key.
+    pub const V: usize = 0x56;
+    /// Letter W key.
+    pub const W: usize = 0x57;
+    /// Letter X key.
+    pub const X: usize = 0x58;
+    /// Letter Y key.
+    pub const Y: usize = 0x59;
+    /// Letter Z key.
+    pub const Z: usize = 0x5A;
 
-/// Up arrow key.
-pub const K_UP: usize = 0x26;
-/// Down arrow key.
-pub const K_DOWN: usize = 0x28;
-/// Left arrow key.
-pub const K_LEFT: usize = 0x25;
-/// Right arrow key.
-pub const K_RIGHT: usize = 0x27;
+    /// Numpad 0 key.
+    pub const NUMPAD_0: usize = 0x60;
+    /// Numpad 1 key.
+    pub const NUMPAD_1: usize = 0x61;
+    /// Numpad 2 key.
+    pub const NUMPAD_2: usize = 0x62;
+    /// Numpad 3 key.
+    pub const NUMPAD_3: usize = 0x63;
+    /// Numpad 4 key.
+    pub const NUMPAD_4: usize = 0x64;
+    /// Numpad 5 key.
+    pub const NUMPAD_5: usize = 0x65;
+    /// Numpad 6 key.
+    pub const NUMPAD_6: usize = 0x66;
+    /// Numpad 7 key.
+    pub const NUMPAD_7: usize = 0x67;
+    /// Numpad 8 key.
+    pub const NUMPAD_8: usize = 0x68;
+    /// Numpad 9 key.
+    pub const NUMPAD_9: usize = 0x69;
+    /// Numpad addition key (+).
+    pub const NUMPAD_ADD: usize = 0x6B;
+    /// Numpad subtraction key (-).
+    pub const NUMPAD_SUBTRACT: usize = 0x6D;
+    /// Numpad multiplication key (*).
+    pub const NUMPAD_MULTIPLY: usize = 0x6A;
+    /// Numpad division key (/).
+    pub const NUMPAD_DIVIDE: usize = 0x6F;
+    /// Numpad Enter key.
+    pub const NUMPAD_ENTER: usize = 0x0D;
 
-/// F1 function key.
-pub const K_F1: usize = 0x70;
-/// F2 function key.
-pub const K_F2: usize = 0x71;
-/// F3 function key.
-pub const K_F3: usize = 0x72;
-/// F4 function key.
-pub const K_F4: usize = 0x73;
-/// F5 function key.
-pub const K_F5: usize = 0x74;
-/// F6 function key.
-pub const K_F6: usize = 0x75;
-/// F7 function key.
-pub const K_F7: usize = 0x76;
-/// F8 function key.
-pub const K_F8: usize = 0x77;
-/// F9 function key.
-pub const K_F9: usize = 0x78;
-/// F10 function key.
-pub const K_F10: usize = 0x79;
-/// F11 function key.
-pub const K_F11: usize = 0x7A;
-/// F12 function key.
-pub const K_F12: usize = 0x7B;
+    /// Semicolon / Colon key.
+    /// Only works with US ANSI Keyboards
+    pub const SEMICOLON: usize = 0xBA;
+    /// Equals / Plus key.
+    /// Only works with US ANSI Keyboards
+    pub const EQUAL: usize = 0xBB;
+    /// Comma / Less Than key.
+    /// Only works with US ANSI Keyboards
+    pub const COMMA: usize = 0xBC;
+    /// Dash / Underscore key.
+    /// Only works with US ANSI Keyboards
+    pub const DASH: usize = 0xBD;
+    /// Period / Greater Than key.
+    /// Only works with US ANSI Keyboards
+    pub const PERIOD: usize = 0xBE;
+    /// Forward Slash / Question Mark key.
+    /// Only works with US ANSI Keyboards
+    pub const SLASH: usize = 0xBF;
+    /// Backtick / Tilde key.
+    /// Only works with US ANSI Keyboards
+    pub const BACKTICK: usize = 0xC0;
+    /// Left Brace / Left Curly Bracket key.
+    /// Only works with US ANSI Keyboards
+    pub const LEFT_BRACE: usize = 0xDB;
+    /// Backslash / Pipe key.
+    /// Only works with US ANSI Keyboards
+    pub const BACKSLASH: usize = 0xDC;
+    /// Right Brace / Right Curly Bracket key.
+    /// Only works with US ANSI Keyboards
+    pub const RIGHT_BRACE: usize = 0xDD;
+    /// Apostrophe / Double Quote key.
+    /// Only works with US ANSI Keyboards
+    pub const APOSTROPHE: usize = 0xDE;
+}
 
-/// Number 0 key.
-pub const K_0: usize = 0x30;
-/// Number 1 key.
-pub const K_1: usize = 0x31;
-/// Number 2 key.
-pub const K_2: usize = 0x32;
-/// Number 3 key.
-pub const K_3: usize = 0x33;
-/// Number 4 key.
-pub const K_4: usize = 0x34;
-/// Number 5 key.
-pub const K_5: usize = 0x35;
-/// Number 6 key.
-pub const K_6: usize = 0x36;
-/// Number 7 key.
-pub const K_7: usize = 0x37;
-/// Number 8 key.
-pub const K_8: usize = 0x38;
-/// Number 9 key.
-pub const K_9: usize = 0x39;
+/// Provides named constants for musical note frequencies (in Hertz).
+///
+/// These constants are designed to be used with the [`AudioEngine`]'s
+/// functions like `play_note()`, `play_notes()`, `note_on()`, and `note_off()`.
+/// Instead of passing raw frequency values, you can use constants
+/// like `note::C4` (Middle C) or `note::A4` (440 Hz).
+///
+/// # Example
+/// ```ignore
+/// // Play a single note for 500 ms
+/// engine.audio.play_note(note::A4, 500);
+///
+/// // Play a C major chord
+/// engine.audio.play_notes(&[note::C4, note::E4, note::G4], 750);
+/// ```
+///
+/// Notes follow standard scientific pitch notation:
+/// - Octaves are numbered (ex: `C4`, `A5`).
+/// - Sharps/flats use `_SHARP` (ex: `F_SHARP3`, equivalent to Gb3).
+///
+/// Frequencies are based on equal temperament tuning with `A4 = 440.00 Hz`.
+pub mod note {
+    /// A1 (55.00 Hz). Used with the `AudioEngine`'s `play_note` and `play_notes` functions
+    pub const A1: f32 = 55.00;
+    /// A2 (110.00 Hz)
+    pub const A2: f32 = 110.00;
+    /// A3 (220.00 Hz)
+    pub const A3: f32 = 220.00;
+    /// A4 (440.00 Hz)
+    pub const A4: f32 = 440.00;
+    /// A5 (880.00 Hz)
+    pub const A5: f32 = 880.00;
+    /// A6 (1760.00 Hz)
+    pub const A6: f32 = 1760.00;
+    /// A7 (3520.00 Hz)
+    pub const A7: f32 = 3520.00;
+    /// A8 (7040.00 Hz)
+    pub const A8: f32 = 7040.00;
 
-/// Letter A key.
-pub const K_A: usize = 0x41;
-/// Letter B key.
-pub const K_B: usize = 0x42;
-/// Letter C key.
-pub const K_C: usize = 0x43;
-/// Letter D key.
-pub const K_D: usize = 0x44;
-/// Letter E key.
-pub const K_E: usize = 0x45;
-/// Letter F key.
-pub const K_F: usize = 0x46;
-/// Letter G key.
-pub const K_G: usize = 0x47;
-/// Letter H key.
-pub const K_H: usize = 0x48;
-/// Letter I key.
-pub const K_I: usize = 0x49;
-/// Letter J key.
-pub const K_J: usize = 0x4A;
-/// Letter K key.
-pub const K_K: usize = 0x4B;
-/// Letter L key.
-pub const K_L: usize = 0x4C;
-/// Letter M key.
-pub const K_M: usize = 0x4D;
-/// Letter N key.
-pub const K_N: usize = 0x4E;
-/// Letter O key.
-pub const K_O: usize = 0x4F;
-/// Letter P key.
-pub const K_P: usize = 0x50;
-/// Letter Q key.
-pub const K_Q: usize = 0x51;
-/// Letter R key.
-pub const K_R: usize = 0x52;
-/// Letter S key.
-pub const K_S: usize = 0x53;
-/// Letter T key.
-pub const K_T: usize = 0x54;
-/// Letter U key.
-pub const K_U: usize = 0x55;
-/// Letter V key.
-pub const K_V: usize = 0x56;
-/// Letter W key.
-pub const K_W: usize = 0x57;
-/// Letter X key.
-pub const K_X: usize = 0x58;
-/// Letter Y key.
-pub const K_Y: usize = 0x59;
-/// Letter Z key.
-pub const K_Z: usize = 0x5A;
+    /// A#1 / Bb1 (58.27 Hz)
+    pub const A_SHARP1: f32 = 58.27;
+    /// A#2 / Bb2 (116.54 Hz)
+    pub const A_SHARP2: f32 = 116.54;
+    /// A#3 / Bb3 (233.08 Hz)
+    pub const A_SHARP3: f32 = 233.08;
+    /// A#4 / Bb4 (466.16 Hz)
+    pub const A_SHARP4: f32 = 466.16;
+    /// A#5 / Bb5 (932.33 Hz)
+    pub const A_SHARP5: f32 = 932.33;
+    /// A#6 / Bb6 (1864.66 Hz)
+    pub const A_SHARP6: f32 = 1864.66;
+    /// A#7 / Bb7 (3729.31 Hz)
+    pub const A_SHARP7: f32 = 3729.31;
+    /// A#8 / Bb8 (7458.62 Hz)
+    pub const A_SHARP8: f32 = 7458.62;
 
-/// Numpad 0 key.
-pub const K_NUMPAD_0: usize = 0x60;
-/// Numpad 1 key.
-pub const K_NUMPAD_1: usize = 0x61;
-/// Numpad 2 key.
-pub const K_NUMPAD_2: usize = 0x62;
-/// Numpad 3 key.
-pub const K_NUMPAD_3: usize = 0x63;
-/// Numpad 4 key.
-pub const K_NUMPAD_4: usize = 0x64;
-/// Numpad 5 key.
-pub const K_NUMPAD_5: usize = 0x65;
-/// Numpad 6 key.
-pub const K_NUMPAD_6: usize = 0x66;
-/// Numpad 7 key.
-pub const K_NUMPAD_7: usize = 0x67;
-/// Numpad 8 key.
-pub const K_NUMPAD_8: usize = 0x68;
-/// Numpad 9 key.
-pub const K_NUMPAD_9: usize = 0x69;
-/// Numpad addition key (+).
-pub const K_NUMPAD_ADD: usize = 0x6B;
-/// Numpad subtraction key (-).
-pub const K_NUMPAD_SUBTRACT: usize = 0x6D;
-/// Numpad multiplication key (*).
-pub const K_NUMPAD_MULTIPLY: usize = 0x6A;
-/// Numpad division key (/).
-pub const K_NUMPAD_DIVIDE: usize = 0x6F;
-/// Numpad Enter key.
-pub const K_NUMPAD_ENTER: usize = 0x0D;
+    /// B1 (61.74 Hz)
+    pub const B1: f32 = 61.74;
+    /// B2 (123.47 Hz)
+    pub const B2: f32 = 123.47;
+    /// B3 (246.94 Hz)
+    pub const B3: f32 = 246.94;
+    /// B4 (493.88 Hz)
+    pub const B4: f32 = 493.88;
+    /// B5 (987.77 Hz)
+    pub const B5: f32 = 987.77;
+    /// B6 (1975.53 Hz)
+    pub const B6: f32 = 1975.53;
+    /// B7 (3951.07 Hz)
+    pub const B7: f32 = 3951.07;
+    /// B8 (7902.13 Hz)
+    pub const B8: f32 = 7902.13;
 
-/// Semicolon / Colon key.
-/// Only works with US ANSI Keyboards
-pub const K_SEMICOLON: usize = 0xBA;
-/// Equals / Plus key.
-/// Only works with US ANSI Keyboards
-pub const K_EQUAL: usize = 0xBB;
-/// Comma / Less Than key.
-/// Only works with US ANSI Keyboards
-pub const K_COMMA: usize = 0xBC;
-/// Dash / Underscore key.
-/// Only works with US ANSI Keyboards
-pub const K_DASH: usize = 0xBD;
-/// Period / Greater Than key.
-/// Only works with US ANSI Keyboards
-pub const K_PERIOD: usize = 0xBE;
-/// Forward Slash / Question Mark key.
-/// Only works with US ANSI Keyboards
-pub const K_SLASH: usize = 0xBF;
-/// Backtick / Tilde key.
-/// Only works with US ANSI Keyboards
-pub const K_BACKTICK: usize = 0xC0;
-/// Left Brace / Left Curly Bracket key.
-/// Only works with US ANSI Keyboards
-pub const K_LEFT_BRACE: usize = 0xDB;
-/// Backslash / Pipe key.
-/// Only works with US ANSI Keyboards
-pub const K_BACKSLASH: usize = 0xDC;
-/// Right Brace / Right Curly Bracket key.
-/// Only works with US ANSI Keyboards
-pub const K_RIGHT_BRACE: usize = 0xDD;
-/// Apostrophe / Double Quote key.
-/// Only works with US ANSI Keyboards
-pub const K_APOSTROPHE: usize = 0xDE;
+    /// C1 (32.70 Hz)
+    pub const C1: f32 = 32.70;
+    /// C2 (65.41 Hz)
+    pub const C2: f32 = 65.41;
+    /// C3 (130.81 Hz)
+    pub const C3: f32 = 130.81;
+    /// C4 (261.63 Hz)
+    pub const C4: f32 = 261.63;
+    /// C5 (523.25 Hz)
+    pub const C5: f32 = 523.25;
+    /// C6 (1046.50 Hz)
+    pub const C6: f32 = 1046.50;
+    /// C7 (2093.00 Hz)
+    pub const C7: f32 = 2093.00;
+    /// C8 (4186.01 Hz)
+    pub const C8: f32 = 4186.01;
 
-// ---------------------
-// NOTES
-// ---------------------
+    /// C#1 / Db1 (34.65 Hz)
+    pub const C_SHARP1: f32 = 34.65;
+    /// C#2 / Db2 (69.30 Hz)
+    pub const C_SHARP2: f32 = 69.30;
+    /// C#3 / Db3 (138.59 Hz)
+    pub const C_SHARP3: f32 = 138.59;
+    /// C#4 / Db4 (277.18 Hz)
+    pub const C_SHARP4: f32 = 277.18;
+    /// C#5 / Db5 (554.37 Hz)
+    pub const C_SHARP5: f32 = 554.37;
+    /// C#6 / Db6 (1108.73 Hz)
+    pub const C_SHARP6: f32 = 1108.73;
+    /// C#7 / Db7 (2217.46 Hz)
+    pub const C_SHARP7: f32 = 2217.46;
+    /// C#8 / Db8 (4434.92 Hz)
+    pub const C_SHARP8: f32 = 4434.92;
 
-/// A1 (55.00 Hz). Used with the `AudioEngine`'s `play_note` and `play_notes` functions
-pub const A1: f32 = 55.00;
-/// A2 (110.00 Hz)
-pub const A2: f32 = 110.00;
-/// A3 (220.00 Hz)
-pub const A3: f32 = 220.00;
-/// A4 (440.00 Hz)
-pub const A4: f32 = 440.00;
-/// A5 (880.00 Hz)
-pub const A5: f32 = 880.00;
-/// A6 (1760.00 Hz)
-pub const A6: f32 = 1760.00;
-/// A7 (3520.00 Hz)
-pub const A7: f32 = 3520.00;
-/// A8 (7040.00 Hz)
-pub const A8: f32 = 7040.00;
+    /// D1 (36.71 Hz)
+    pub const D1: f32 = 36.71;
+    /// D2 (73.42 Hz)
+    pub const D2: f32 = 73.42;
+    /// D3 (146.83 Hz)
+    pub const D3: f32 = 146.83;
+    /// D4 (293.66 Hz)
+    pub const D4: f32 = 293.66;
+    /// D5 (587.33 Hz)
+    pub const D5: f32 = 587.33;
+    /// D6 (1174.66 Hz)
+    pub const D6: f32 = 1174.66;
+    /// D7 (2349.32 Hz)
+    pub const D7: f32 = 2349.32;
+    /// D8 (4698.63 Hz)
+    pub const D8: f32 = 4698.63;
 
-/// A#1 / Bb1 (58.27 Hz)
-pub const A_SHARP1: f32 = 58.27;
-/// A#2 / Bb2 (116.54 Hz)
-pub const A_SHARP2: f32 = 116.54;
-/// A#3 / Bb3 (233.08 Hz)
-pub const A_SHARP3: f32 = 233.08;
-/// A#4 / Bb4 (466.16 Hz)
-pub const A_SHARP4: f32 = 466.16;
-/// A#5 / Bb5 (932.33 Hz)
-pub const A_SHARP5: f32 = 932.33;
-/// A#6 / Bb6 (1864.66 Hz)
-pub const A_SHARP6: f32 = 1864.66;
-/// A#7 / Bb7 (3729.31 Hz)
-pub const A_SHARP7: f32 = 3729.31;
-/// A#8 / Bb8 (7458.62 Hz)
-pub const A_SHARP8: f32 = 7458.62;
+    /// D#1 / Eb1 (38.89 Hz)
+    pub const D_SHARP1: f32 = 38.89;
+    /// D#2 / Eb2 (77.78 Hz)
+    pub const D_SHARP2: f32 = 77.78;
+    /// D#3 / Eb3 (155.56 Hz)
+    pub const D_SHARP3: f32 = 155.56;
+    /// D#4 / Eb4 (311.13 Hz)
+    pub const D_SHARP4: f32 = 311.13;
+    /// D#5 / Eb5 (622.25 Hz)
+    pub const D_SHARP5: f32 = 622.25;
+    /// D#6 / Eb6 (1244.51 Hz)
+    pub const D_SHARP6: f32 = 1244.51;
+    /// D#7 / Eb7 (2489.02 Hz)
+    pub const D_SHARP7: f32 = 2489.02;
+    /// D#8 / Eb8 (4978.03 Hz)
+    pub const D_SHARP8: f32 = 4978.03;
 
-/// B1 (61.74 Hz)
-pub const B1: f32 = 61.74;
-/// B2 (123.47 Hz)
-pub const B2: f32 = 123.47;
-/// B3 (246.94 Hz)
-pub const B3: f32 = 246.94;
-/// B4 (493.88 Hz)
-pub const B4: f32 = 493.88;
-/// B5 (987.77 Hz)
-pub const B5: f32 = 987.77;
-/// B6 (1975.53 Hz)
-pub const B6: f32 = 1975.53;
-/// B7 (3951.07 Hz)
-pub const B7: f32 = 3951.07;
-/// B8 (7902.13 Hz)
-pub const B8: f32 = 7902.13;
+    /// E1 (41.20 Hz)
+    pub const E1: f32 = 41.20;
+    /// E2 (82.41 Hz)
+    pub const E2: f32 = 82.41;
+    /// E3 (164.81 Hz)
+    pub const E3: f32 = 164.81;
+    /// E4 (329.63 Hz)
+    pub const E4: f32 = 329.63;
+    /// E5 (659.25 Hz)
+    pub const E5: f32 = 659.25;
+    /// E6 (1318.51 Hz)
+    pub const E6: f32 = 1318.51;
+    /// E7 (2637.02 Hz)
+    pub const E7: f32 = 2637.02;
+    /// E8 (5274.04 Hz)
+    pub const E8: f32 = 5274.04;
 
-/// C1 (32.70 Hz)
-pub const C1: f32 = 32.70;
-/// C2 (65.41 Hz)
-pub const C2: f32 = 65.41;
-/// C3 (130.81 Hz)
-pub const C3: f32 = 130.81;
-/// C4 (261.63 Hz)
-pub const C4: f32 = 261.63;
-/// C5 (523.25 Hz)
-pub const C5: f32 = 523.25;
-/// C6 (1046.50 Hz)
-pub const C6: f32 = 1046.50;
-/// C7 (2093.00 Hz)
-pub const C7: f32 = 2093.00;
-/// C8 (4186.01 Hz)
-pub const C8: f32 = 4186.01;
+    /// F1 (43.65 Hz)
+    pub const F1: f32 = 43.65;
+    /// F2 (87.31 Hz)
+    pub const F2: f32 = 87.31;
+    /// F3 (174.61 Hz)
+    pub const F3: f32 = 174.61;
+    /// F4 (349.23 Hz)
+    pub const F4: f32 = 349.23;
+    /// F5 (698.46 Hz)
+    pub const F5: f32 = 698.46;
+    /// F6 (1396.91 Hz)
+    pub const F6: f32 = 1396.91;
+    /// F7 (2793.83 Hz)
+    pub const F7: f32 = 2793.83;
+    /// F8 (5587.65 Hz)
+    pub const F8: f32 = 5587.65;
 
-/// C#1 / Db1 (34.65 Hz)
-pub const C_SHARP1: f32 = 34.65;
-/// C#2 / Db2 (69.30 Hz)
-pub const C_SHARP2: f32 = 69.30;
-/// C#3 / Db3 (138.59 Hz)
-pub const C_SHARP3: f32 = 138.59;
-/// C#4 / Db4 (277.18 Hz)
-pub const C_SHARP4: f32 = 277.18;
-/// C#5 / Db5 (554.37 Hz)
-pub const C_SHARP5: f32 = 554.37;
-/// C#6 / Db6 (1108.73 Hz)
-pub const C_SHARP6: f32 = 1108.73;
-/// C#7 / Db7 (2217.46 Hz)
-pub const C_SHARP7: f32 = 2217.46;
-/// C#8 / Db8 (4434.92 Hz)
-pub const C_SHARP8: f32 = 4434.92;
+    /// F#1 / Gb1 (46.25 Hz)
+    pub const F_SHARP1: f32 = 46.25;
+    /// F#2 / Gb2 (92.50 Hz)
+    pub const F_SHARP2: f32 = 92.50;
+    /// F#3 / Gb3 (185.00 Hz)
+    pub const F_SHARP3: f32 = 185.00;
+    /// F#4 / Gb4 (369.99 Hz)
+    pub const F_SHARP4: f32 = 369.99;
+    /// F#5 / Gb5 (739.99 Hz)
+    pub const F_SHARP5: f32 = 739.99;
+    /// F#6 / Gb6 (1479.98 Hz)
+    pub const F_SHARP6: f32 = 1479.98;
+    /// F#7 / Gb7 (2959.96 Hz)
+    pub const F_SHARP7: f32 = 2959.96;
+    /// F#8 / Gb8 (5919.91 Hz)
+    pub const F_SHARP8: f32 = 5919.91;
 
-/// D1 (36.71 Hz)
-pub const D1: f32 = 36.71;
-/// D2 (73.42 Hz)
-pub const D2: f32 = 73.42;
-/// D3 (146.83 Hz)
-pub const D3: f32 = 146.83;
-/// D4 (293.66 Hz)
-pub const D4: f32 = 293.66;
-/// D5 (587.33 Hz)
-pub const D5: f32 = 587.33;
-/// D6 (1174.66 Hz)
-pub const D6: f32 = 1174.66;
-/// D7 (2349.32 Hz)
-pub const D7: f32 = 2349.32;
-/// D8 (4698.63 Hz)
-pub const D8: f32 = 4698.63;
+    /// G1 (49.00 Hz)
+    pub const G1: f32 = 49.00;
+    /// G2 (98.00 Hz)
+    pub const G2: f32 = 98.00;
+    /// G3 (196.00 Hz)
+    pub const G3: f32 = 196.00;
+    /// G4 (392.00 Hz)
+    pub const G4: f32 = 392.00;
+    /// G5 (783.99 Hz)
+    pub const G5: f32 = 783.99;
+    /// G6 (1567.98 Hz)
+    pub const G6: f32 = 1567.98;
+    /// G7 (3135.96 Hz)
+    pub const G7: f32 = 3135.96;
+    /// G8 (6271.93 Hz)
+    pub const G8: f32 = 6271.93;
 
-/// D#1 / Eb1 (38.89 Hz)
-pub const D_SHARP1: f32 = 38.89;
-/// D#2 / Eb2 (77.78 Hz)
-pub const D_SHARP2: f32 = 77.78;
-/// D#3 / Eb3 (155.56 Hz)
-pub const D_SHARP3: f32 = 155.56;
-/// D#4 / Eb4 (311.13 Hz)
-pub const D_SHARP4: f32 = 311.13;
-/// D#5 / Eb5 (622.25 Hz)
-pub const D_SHARP5: f32 = 622.25;
-/// D#6 / Eb6 (1244.51 Hz)
-pub const D_SHARP6: f32 = 1244.51;
-/// D#7 / Eb7 (2489.02 Hz)
-pub const D_SHARP7: f32 = 2489.02;
-/// D#8 / Eb8 (4978.03 Hz)
-pub const D_SHARP8: f32 = 4978.03;
+    /// G#1 / Ab1 (51.91 Hz)
+    pub const G_SHARP1: f32 = 51.91;
+    /// G#2 / Ab2 (103.83 Hz)
+    pub const G_SHARP2: f32 = 103.83;
+    /// G#3 / Ab3 (207.65 Hz)
+    pub const G_SHARP3: f32 = 207.65;
+    /// G#4 / Ab4 (415.30 Hz)
+    pub const G_SHARP4: f32 = 415.30;
+    /// G#5 / Ab5 (830.61 Hz)
+    pub const G_SHARP5: f32 = 830.61;
+    /// G#6 / Ab6 (1661.22 Hz)
+    pub const G_SHARP6: f32 = 1661.22;
+    /// G#7 / Ab7 (3322.44 Hz)
+    pub const G_SHARP7: f32 = 3322.44;
+    /// G#8 / Ab8 (6644.88 Hz)
+    pub const G_SHARP8: f32 = 6644.88;
+}
 
-/// E1 (41.20 Hz)
-pub const E1: f32 = 41.20;
-/// E2 (82.41 Hz)
-pub const E2: f32 = 82.41;
-/// E3 (164.81 Hz)
-pub const E3: f32 = 164.81;
-/// E4 (329.63 Hz)
-pub const E4: f32 = 329.63;
-/// E5 (659.25 Hz)
-pub const E5: f32 = 659.25;
-/// E6 (1318.51 Hz)
-pub const E6: f32 = 1318.51;
-/// E7 (2637.02 Hz)
-pub const E7: f32 = 2637.02;
-/// E8 (5274.04 Hz)
-pub const E8: f32 = 5274.04;
+// endregion
 
-/// F1 (43.65 Hz)
-pub const F1: f32 = 43.65;
-/// F2 (87.31 Hz)
-pub const F2: f32 = 87.31;
-/// F3 (174.61 Hz)
-pub const F3: f32 = 174.61;
-/// F4 (349.23 Hz)
-pub const F4: f32 = 349.23;
-/// F5 (698.46 Hz)
-pub const F5: f32 = 698.46;
-/// F6 (1396.91 Hz)
-pub const F6: f32 = 1396.91;
-/// F7 (2793.83 Hz)
-pub const F7: f32 = 2793.83;
-/// F8 (5587.65 Hz)
-pub const F8: f32 = 5587.65;
+// region: Prelude
 
-/// F#1 / Gb1 (46.25 Hz)
-pub const F_SHARP1: f32 = 46.25;
-/// F#2 / Gb2 (92.50 Hz)
-pub const F_SHARP2: f32 = 92.50;
-/// F#3 / Gb3 (185.00 Hz)
-pub const F_SHARP3: f32 = 185.00;
-/// F#4 / Gb4 (369.99 Hz)
-pub const F_SHARP4: f32 = 369.99;
-/// F#5 / Gb5 (739.99 Hz)
-pub const F_SHARP5: f32 = 739.99;
-/// F#6 / Gb6 (1479.98 Hz)
-pub const F_SHARP6: f32 = 1479.98;
-/// F#7 / Gb7 (2959.96 Hz)
-pub const F_SHARP7: f32 = 2959.96;
-/// F#8 / Gb8 (5919.91 Hz)
-pub const F_SHARP8: f32 = 5919.91;
+pub mod prelude {
+    pub use crate::ConsoleGame;
+    pub use crate::ConsoleGameEngine;
+    pub use crate::Sprite;
 
-/// G1 (49.00 Hz)
-pub const G1: f32 = 49.00;
-/// G2 (98.00 Hz)
-pub const G2: f32 = 98.00;
-/// G3 (196.00 Hz)
-pub const G3: f32 = 196.00;
-/// G4 (392.00 Hz)
-pub const G4: f32 = 392.00;
-/// G5 (783.99 Hz)
-pub const G5: f32 = 783.99;
-/// G6 (1567.98 Hz)
-pub const G6: f32 = 1567.98;
-/// G7 (3135.96 Hz)
-pub const G7: f32 = 3135.96;
-/// G8 (6271.93 Hz)
-pub const G8: f32 = 6271.93;
+    pub use crate::color::{BG_BLACK, BG_WHITE, FG_BLACK, FG_BLUE, FG_GREEN, FG_RED, FG_WHITE};
 
-/// G#1 / Ab1 (51.91 Hz)
-pub const G_SHARP1: f32 = 51.91;
-/// G#2 / Ab2 (103.83 Hz)
-pub const G_SHARP2: f32 = 103.83;
-/// G#3 / Ab3 (207.65 Hz)
-pub const G_SHARP3: f32 = 207.65;
-/// G#4 / Ab4 (415.30 Hz)
-pub const G_SHARP4: f32 = 415.30;
-/// G#5 / Ab5 (830.61 Hz)
-pub const G_SHARP5: f32 = 830.61;
-/// G#6 / Ab6 (1661.22 Hz)
-pub const G_SHARP6: f32 = 1661.22;
-/// G#7 / Ab7 (3322.44 Hz)
-pub const G_SHARP7: f32 = 3322.44;
-/// G#8 / Ab8 (6644.88 Hz)
-pub const G_SHARP8: f32 = 6644.88;
+    pub use crate::pixel::{EMPTY, HALF, QUARTER, SOLID, THREE_QUARTERS};
+
+    pub use crate::key::{A, ARROW_DOWN, ARROW_LEFT, ARROW_RIGHT, ARROW_UP, D, S, SPACE, W};
+
+    pub use crate::mouse_button::{LEFT, MIDDLE, RIGHT};
+
+    pub use crate::note::{A4, C4};
+}
 
 // endregion
 
@@ -594,7 +685,7 @@ impl ConsoleState {
             let size = (self.screen_width as u32) * (self.screen_height as u32);
             FillConsoleOutputCharacterW(
                 output_handle,
-                b' ' as u16,
+                EMPTY,
                 size,
                 COORD { X: 0, Y: 0 },
                 &mut chars_written,
@@ -640,7 +731,7 @@ impl Sprite {
         Self {
             width,
             height,
-            glyphs: vec![PIXEL_EMPTY; width * height],
+            glyphs: vec![EMPTY; width * height],
             colors: vec![FG_BLACK; width * height],
         }
     }
@@ -724,7 +815,7 @@ impl Sprite {
         if x < self.width && y < self.height {
             self.glyphs[y * self.width + x]
         } else {
-            PIXEL_EMPTY
+            EMPTY
         }
     }
 
@@ -1811,6 +1902,9 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
 // region: Drawing
 
+use color::*;
+use pixel::*;
+
 impl<G: ConsoleGame> ConsoleGameEngine<G> {
     /// Clamps `x` and `y` to be within the screen boundaries.
     pub fn clip(&self, x: &mut i32, y: &mut i32) {
@@ -1830,7 +1924,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Draws a single white pixel at `(x, y)`.
     pub fn draw(&mut self, x: i32, y: i32) {
-        self.draw_with(x, y, PIXEL_SOLID, FG_WHITE);
+        self.draw_with(x, y, SOLID, FG_WHITE);
     }
 
     /// Draws a single pixel at `(x, y)` with the specified glyph and color.
@@ -1844,14 +1938,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Clears the entire screen with the given color.
     pub fn clear(&mut self, col: u16) {
-        self.fill_rect_with(
-            0,
-            0,
-            self.screen_width(),
-            self.screen_height(),
-            PIXEL_EMPTY,
-            col,
-        );
+        self.fill_rect_with(0, 0, self.screen_width(), self.screen_height(), EMPTY, col);
     }
 
     /// Draws a string of white text starting at `(x, y)`.
@@ -1886,7 +1973,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Draws a white line from `(x1, y1)` to `(x2, y2)`.
     pub fn draw_line(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
-        self.draw_line_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
+        self.draw_line_with(x1, y1, x2, y2, SOLID, FG_WHITE);
     }
 
     /// Draws a line from `(x1, y1)` to `(x2, y2)` with the specified glyph and color.
@@ -1939,7 +2026,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Draws a white triangle connecting three points.
     pub fn draw_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
-        self.draw_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
+        self.draw_triangle_with(x1, y1, x2, y2, x3, y3, SOLID, FG_WHITE);
     }
 
     /// Draws a triangle connecting three points with the specified glyph and color.
@@ -1962,7 +2049,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Fills a triangle connecting three points with white pixels.
     pub fn fill_triangle(&mut self, x1: i32, y1: i32, x2: i32, y2: i32, x3: i32, y3: i32) {
-        self.fill_triangle_with(x1, y1, x2, y2, x3, y3, PIXEL_SOLID, FG_WHITE);
+        self.fill_triangle_with(x1, y1, x2, y2, x3, y3, SOLID, FG_WHITE);
     }
 
     /// Fills a triangle connecting three points with the specified glyph and color.
@@ -2061,7 +2148,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Draws a white rectangle at `(x, y)` with width `w` and height `h`.
     pub fn draw_rectangle(&mut self, x: i32, y: i32, w: i32, h: i32) {
-        self.draw_rectangle_with(x, y, w, h, PIXEL_SOLID, FG_WHITE);
+        self.draw_rectangle_with(x, y, w, h, SOLID, FG_WHITE);
     }
 
     /// Draws a rectangle at `(x, y)` with width `w` and height `h` using the specified glyph and color.
@@ -2078,7 +2165,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Fills a rectangle from `(x1, y1)` to `(x2, y2)` with white pixels.
     pub fn fill_rect(&mut self, x1: i32, y1: i32, x2: i32, y2: i32) {
-        self.fill_rect_with(x1, y1, x2, y2, PIXEL_SOLID, FG_WHITE);
+        self.fill_rect_with(x1, y1, x2, y2, SOLID, FG_WHITE);
     }
 
     /// Fills a rectangle from `(x1, y1)` to `(x2, y2)` with the specified glyph and color.
@@ -2103,7 +2190,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Draws a white circle centered at `(xc, yc)` with radius `r`.
     pub fn draw_circle(&mut self, xc: i32, yc: i32, r: i32) {
-        self.draw_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
+        self.draw_circle_with(xc, yc, r, SOLID, FG_WHITE);
     }
 
     /// Draws a circle centered at `(xc, yc)` with radius `r` using the specified glyph and color.
@@ -2137,7 +2224,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
 
     /// Fills a circle centered at `(xc, yc)` with white pixels and radius `r`.
     pub fn fill_circle(&mut self, xc: i32, yc: i32, r: i32) {
-        self.fill_circle_with(xc, yc, r, PIXEL_SOLID, FG_WHITE);
+        self.fill_circle_with(xc, yc, r, SOLID, FG_WHITE);
     }
 
     /// Fills a circle centered at `(xc, yc)` with radius `r` using the specified glyph and color.
@@ -2324,7 +2411,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         for i in 0..sprite.width {
             for j in 0..sprite.height {
                 let glyph = sprite.get_glyph(i, j);
-                if glyph != PIXEL_EMPTY {
+                if glyph != EMPTY {
                     let color = sprite.get_color(i, j);
                     self.draw_with(x + i as i32, y + j as i32, glyph, color);
                 }
@@ -2353,7 +2440,7 @@ impl<G: ConsoleGame> ConsoleGameEngine<G> {
         for i in 0..w {
             for j in 0..h {
                 let glyph = sprite.get_glyph(i + ox, j + oy);
-                if glyph != PIXEL_EMPTY {
+                if glyph != EMPTY {
                     let color = sprite.get_color(i + ox, j + oy);
                     self.draw_with(x + i as i32, y + j as i32, glyph, color);
                 }

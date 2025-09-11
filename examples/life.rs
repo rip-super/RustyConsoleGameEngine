@@ -1,5 +1,5 @@
 use rand::random_range;
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
 
 struct GameOfLife {
     output: Vec<i32>,
@@ -40,13 +40,13 @@ impl ConsoleGame for GameOfLife {
     }
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
-        if engine.key_pressed(K_UP) {
+        if engine.key_pressed(ARROW_UP) {
             self.tick_rate = (self.tick_rate * 0.8).max(0.01);
         }
-        if engine.key_pressed(K_DOWN) {
+        if engine.key_pressed(ARROW_DOWN) {
             self.tick_rate = (self.tick_rate * 1.2).min(1.0);
         }
-        if engine.key_pressed(K_SPACE) {
+        if engine.key_pressed(SPACE) {
             self.paused = !self.paused;
         }
 
@@ -91,7 +91,7 @@ impl ConsoleGame for GameOfLife {
                 if cell(x, y, &self.output) == 1 {
                     engine.draw(x as i32, y as i32);
                 } else {
-                    engine.draw_with(x as i32, y as i32, PIXEL_SOLID, FG_BLACK);
+                    engine.draw_with(x as i32, y as i32, SOLID, FG_BLACK);
                 }
             }
         }

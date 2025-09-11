@@ -1,5 +1,5 @@
 use rand::random_range;
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
 
 const CELL_PATH_N: i32 = 0x01;
 const CELL_PATH_E: i32 = 0x02;
@@ -57,13 +57,13 @@ impl ConsoleGame for Maze {
     }
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
-        if engine.key_pressed(K_UP) {
+        if engine.key_pressed(ARROW_UP) {
             self.speed = (self.speed * 0.8).max(0.003);
         }
-        if engine.key_pressed(K_DOWN) {
+        if engine.key_pressed(ARROW_DOWN) {
             self.speed = (self.speed * 1.25).min(1.0);
         }
-        if engine.key_pressed(K_SPACE) {
+        if engine.key_pressed(SPACE) {
             self.maze.fill(0);
             self.stack.clear();
             let x = random_range(0..self.maze_width);
@@ -171,7 +171,7 @@ impl ConsoleGame for Maze {
                             engine.draw_with(
                                 x * (self.path_width + 1) + px,
                                 y * (self.path_width + 1) + py,
-                                PIXEL_SOLID,
+                                SOLID,
                                 FG_BLUE,
                             );
                         }
@@ -201,7 +201,7 @@ impl ConsoleGame for Maze {
                 engine.draw_with(
                     cx * (self.path_width + 1) + px,
                     cy * (self.path_width + 1) + py,
-                    PIXEL_SOLID,
+                    SOLID,
                     FG_GREEN,
                 );
             }

@@ -1,4 +1,5 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::color::FG_CYAN;
+use rusty_console_game_engine::prelude::*;
 
 struct Platformer {
     level: String,
@@ -96,21 +97,21 @@ impl ConsoleGame for Platformer {
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
         if engine.console_focused() {
-            if engine.key_held(K_UP) {
+            if engine.key_held(ARROW_UP) {
                 self.vel_y = -6.0;
             }
-            if engine.key_held(K_DOWN) {
+            if engine.key_held(ARROW_DOWN) {
                 self.vel_y = 6.0;
             }
-            if engine.key_held(K_LEFT) {
+            if engine.key_held(LEFT) {
                 self.vel_x += (if self.on_ground { -25.0 } else { -15.0 }) * elapsed_time;
                 self.dir_mod_y = 1;
             }
-            if engine.key_held(K_RIGHT) {
+            if engine.key_held(RIGHT) {
                 self.vel_x += (if self.on_ground { 25.0 } else { 15.0 }) * elapsed_time;
                 self.dir_mod_y = 0;
             }
-            if engine.key_pressed(K_SPACE) && self.vel_y == 0.0 {
+            if engine.key_pressed(SPACE) && self.vel_y == 0.0 {
                 self.vel_y = -12.0;
                 self.dir_mod_x = 1;
             }
@@ -212,7 +213,7 @@ impl ConsoleGame for Platformer {
                             y * tile_height - tile_offset_y as i32,
                             (x + 1) * tile_width - tile_offset_x as i32,
                             (y + 1) * tile_height - tile_offset_y as i32,
-                            PIXEL_SOLID,
+                            SOLID,
                             FG_CYAN,
                         );
                     }
@@ -266,7 +267,7 @@ impl ConsoleGame for Platformer {
                             y * tile_height - tile_offset_y as i32,
                             (x + 1) * tile_width - tile_offset_x as i32,
                             (y + 1) * tile_height - tile_offset_y as i32,
-                            PIXEL_SOLID,
+                            SOLID,
                             FG_CYAN,
                         );
                         engine.draw_partial_sprite(
@@ -285,7 +286,7 @@ impl ConsoleGame for Platformer {
                             y * tile_height - tile_offset_y as i32,
                             (x + 1) * tile_width - tile_offset_x as i32,
                             (y + 1) * tile_height - tile_offset_y as i32,
-                            PIXEL_SOLID,
+                            SOLID,
                             FG_BLACK,
                         );
                     }

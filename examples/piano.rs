@@ -1,4 +1,5 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
+use rusty_console_game_engine::{key::*, note::F4, note::*}; // disambiguation
 use std::collections::HashMap;
 
 macro_rules! nofmt {
@@ -13,19 +14,19 @@ impl Piano {
     fn new() -> Self {
         let mut key_map = HashMap::new();
 
-        key_map.insert(K_Z, A3);
-        key_map.insert(K_S, A_SHARP3);
-        key_map.insert(K_X, B3);
-        key_map.insert(K_C, C4);
-        key_map.insert(K_F, C_SHARP4);
-        key_map.insert(K_V, D4);
-        key_map.insert(K_G, D_SHARP4);
-        key_map.insert(K_B, E4);
-        key_map.insert(K_N, F4);
-        key_map.insert(K_J, F_SHARP4);
-        key_map.insert(K_M, G4);
-        key_map.insert(K_K, G_SHARP4);
-        key_map.insert(K_COMMA, A4);
+        key_map.insert(Z, A3);
+        key_map.insert(S, A_SHARP3);
+        key_map.insert(X, B3);
+        key_map.insert(C, C4);
+        key_map.insert(F, C_SHARP4);
+        key_map.insert(V, D4);
+        key_map.insert(G, D_SHARP4);
+        key_map.insert(B, E4);
+        key_map.insert(N, F4);
+        key_map.insert(J, F_SHARP4);
+        key_map.insert(M, G4);
+        key_map.insert(K, G_SHARP4);
+        key_map.insert(COMMA, A4);
 
         Self { key_map }
     }
@@ -72,7 +73,7 @@ impl ConsoleGame for Piano {
 
 fn main() {
     let mut game = ConsoleGameEngine::new(Piano::new());
-    game.construct_console(51, 15, 16, 16)
+    game.construct_console(50, 15, 15, 15)
         .expect("Console Construction Failed");
     game.start();
 }

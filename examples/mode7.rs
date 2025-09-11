@@ -1,4 +1,8 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
+use rusty_console_game_engine::{
+    color::FG_CYAN,
+    key::{Q, X, Z},
+};
 use std::f32::consts::PI;
 
 pub struct Mode7 {
@@ -40,24 +44,24 @@ impl ConsoleGame for Mode7 {
     }
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
-        if engine.key_held(K_Q) {
+        if engine.key_held(Q) {
             self.near += 0.1 * elapsed_time;
         }
-        if engine.key_held(K_A) {
+        if engine.key_held(A) {
             self.near -= 0.1 * elapsed_time;
         }
 
-        if engine.key_held(K_W) {
+        if engine.key_held(W) {
             self.far += 0.1 * elapsed_time;
         }
-        if engine.key_held(K_S) {
+        if engine.key_held(S) {
             self.far -= 0.1 * elapsed_time;
         }
 
-        if engine.key_held(K_Z) {
+        if engine.key_held(Z) {
             self.fov_half += 0.1 * elapsed_time;
         }
-        if engine.key_held(K_X) {
+        if engine.key_held(X) {
             self.fov_half -= 0.1 * elapsed_time;
         }
 
@@ -104,23 +108,23 @@ impl ConsoleGame for Mode7 {
             engine.screen_height() / 2,
             engine.screen_width(),
             engine.screen_height() / 2,
-            PIXEL_SOLID,
+            SOLID,
             FG_CYAN,
         );
 
-        if engine.key_held(K_LEFT) {
+        if engine.key_held(LEFT) {
             self.world_a -= 1.0 * elapsed_time;
         }
-        if engine.key_held(K_RIGHT) {
+        if engine.key_held(RIGHT) {
             self.world_a += 1.0 * elapsed_time;
         }
 
-        if engine.key_held(K_UP) {
+        if engine.key_held(ARROW_UP) {
             self.world_x += self.world_a.cos() * 0.2 * elapsed_time;
             self.world_y += self.world_a.sin() * 0.2 * elapsed_time;
         }
 
-        if engine.key_held(K_DOWN) {
+        if engine.key_held(ARROW_DOWN) {
             self.world_x -= self.world_a.cos() * 0.2 * elapsed_time;
             self.world_y -= self.world_a.sin() * 0.2 * elapsed_time;
         }

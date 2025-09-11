@@ -1,4 +1,4 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
 use std::f32::consts::PI;
 
 macro_rules! nofmt {

@@ -1,4 +1,5 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::color::*;
+use rusty_console_game_engine::prelude::*;
 use std::collections::VecDeque;
 
 #[derive(Default)]
@@ -57,18 +58,18 @@ impl ConsoleGame for Racer {
     }
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
-        if engine.key_held(K_UP) {
+        if engine.key_held(ARROW_UP) {
             self.speed += 2.0 * elapsed_time;
         } else {
             self.speed -= 1.0 * elapsed_time;
         }
 
         let mut car_direction = 0_i32;
-        if engine.key_held(K_LEFT) {
+        if engine.key_held(ARROW_LEFT) {
             car_direction = -1;
             self.player_curvature -= 0.7 * elapsed_time;
         }
-        if engine.key_held(K_RIGHT) {
+        if engine.key_held(ARROW_RIGHT) {
             car_direction = 1;
             self.player_curvature += 0.7 * elapsed_time;
         }
@@ -113,11 +114,7 @@ impl ConsoleGame for Racer {
 
         for y in 0..(sh / 2) {
             for x in 0..sw {
-                let pix = if y < (sh / 4) {
-                    PIXEL_HALF
-                } else {
-                    PIXEL_SOLID
-                };
+                let pix = if y < (sh / 4) { HALF } else { SOLID };
                 engine.draw_with(x as i32, y as i32, pix, FG_DARK_BLUE);
             }
         }
@@ -127,7 +124,7 @@ impl ConsoleGame for Racer {
             let hill_top = (sh as i32 / 2) - hill;
             for y in hill_top..(sh as i32 / 2) {
                 if y >= 0 && (y as usize) < sh {
-                    engine.draw_with(x as i32, y, PIXEL_SOLID, FG_DARK_YELLOW);
+                    engine.draw_with(x as i32, y, SOLID, FG_DARK_YELLOW);
                 }
             }
         }
@@ -168,15 +165,15 @@ impl ConsoleGame for Racer {
             for x in 0..sw {
                 let xi = x as i32;
                 if xi >= 0 && xi < left_grass {
-                    engine.draw_with(xi, row, PIXEL_SOLID, grass_color);
+                    engine.draw_with(xi, row, SOLID, grass_color);
                 } else if xi >= left_grass && xi < left_clip {
-                    engine.draw_with(xi, row, PIXEL_SOLID, clip_color);
+                    engine.draw_with(xi, row, SOLID, clip_color);
                 } else if xi >= left_clip && xi < right_clip {
-                    engine.draw_with(xi, row, PIXEL_SOLID, road_color);
+                    engine.draw_with(xi, row, SOLID, road_color);
                 } else if xi >= right_clip && xi < right_grass {
-                    engine.draw_with(xi, row, PIXEL_SOLID, clip_color);
+                    engine.draw_with(xi, row, SOLID, clip_color);
                 } else if xi >= right_grass && xi < sw as i32 {
-                    engine.draw_with(xi, row, PIXEL_SOLID, grass_color);
+                    engine.draw_with(xi, row, SOLID, grass_color);
                 }
             }
         }

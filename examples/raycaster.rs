@@ -1,4 +1,4 @@
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::prelude::*;
 use std::f32::consts::PI;
 
 struct Raycaster {
@@ -58,15 +58,15 @@ impl ConsoleGame for Raycaster {
     }
 
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, elapsed_time: f32) -> bool {
-        if engine.key_held(K_A) {
+        if engine.key_held(A) {
             self.player_a -= (self.speed * 0.75) * elapsed_time;
         }
-        if engine.key_held(K_D) {
+        if engine.key_held(D) {
             self.player_a += (self.speed * 0.75) * elapsed_time;
         }
 
         let move_step = self.speed * elapsed_time;
-        if engine.key_held(K_W) {
+        if engine.key_held(W) {
             let next_x = self.player_x + self.player_a.sin() * move_step;
             let next_y = self.player_y + self.player_a.cos() * move_step;
             if next_x >= 0.0
@@ -83,7 +83,7 @@ impl ConsoleGame for Raycaster {
                 self.player_y = next_y;
             }
         }
-        if engine.key_held(K_S) {
+        if engine.key_held(S) {
             let next_x = self.player_x - self.player_a.sin() * move_step;
             let next_y = self.player_y - self.player_a.cos() * move_step;
             if next_x >= 0.0
@@ -158,36 +158,36 @@ impl ConsoleGame for Raycaster {
 
             let mut shade = ' ' as u16;
             if distance_to_wall <= self.depth / 4.0 {
-                shade = PIXEL_SOLID;
+                shade = SOLID;
             } else if distance_to_wall < self.depth / 3.0 {
-                shade = PIXEL_THREEQUARTERS;
+                shade = THREE_QUARTERS;
             } else if distance_to_wall < self.depth / 2.0 {
-                shade = PIXEL_HALF;
+                shade = HALF;
             } else if distance_to_wall < self.depth {
-                shade = PIXEL_QUARTER;
+                shade = QUARTER;
             }
 
             if boundary {
-                shade = PIXEL_EMPTY;
+                shade = EMPTY;
             }
 
             for y in 0..sh {
                 if y <= ceiling {
-                    engine.draw_with(x, y, PIXEL_SOLID, FG_BLACK);
+                    engine.draw_with(x, y, SOLID, FG_BLACK);
                 } else if (y) > ceiling && (y) <= floor {
                     engine.draw_with(x, y, shade, FG_WHITE);
                 } else {
                     let b = 1.0 - ((y as f32 - sh as f32 / 2.0) / (sh as f32 / 2.0));
                     let floor_shade: u16 = if b < 0.25 {
-                        PIXEL_SOLID
+                        SOLID
                     } else if b < 0.5 {
-                        PIXEL_THREEQUARTERS
+                        THREE_QUARTERS
                     } else if b < 0.75 {
-                        PIXEL_HALF
+                        HALF
                     } else if b < 0.9 {
-                        PIXEL_QUARTER
+                        QUARTER
                     } else {
-                        PIXEL_EMPTY
+                        EMPTY
                     };
                     engine.draw_with(x, y, floor_shade, FG_WHITE);
                 }

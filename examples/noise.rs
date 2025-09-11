@@ -1,5 +1,5 @@
 use rand::random;
-use rusty_console_game_engine::*;
+use rusty_console_game_engine::{color::*, key::*, pixel::*, ConsoleGame, ConsoleGameEngine};
 
 struct PerlinNoise {
     output_width: usize,
@@ -125,22 +125,22 @@ impl ConsoleGame for PerlinNoise {
     fn update(&mut self, engine: &mut ConsoleGameEngine<Self>, _elapsed_time: f32) -> bool {
         engine.clear(FG_BLACK);
 
-        if engine.key_released(K_SPACE) {
+        if engine.key_released(SPACE) {
             self.octave_count += 1;
         }
-        if engine.key_released(K_1) {
+        if engine.key_released(1) {
             self.mode = 1;
         }
-        if engine.key_released(K_2) {
+        if engine.key_released(2) {
             self.mode = 2;
         }
-        if engine.key_released(K_3) {
+        if engine.key_released(3) {
             self.mode = 3;
         }
-        if engine.key_released(K_Q) {
+        if engine.key_released(Q) {
             self.scaling_bias += 0.2;
         }
-        if engine.key_released(K_A) {
+        if engine.key_released(A) {
             self.scaling_bias -= 0.2;
         }
 
@@ -153,13 +153,13 @@ impl ConsoleGame for PerlinNoise {
         }
 
         if self.mode == 1 {
-            if engine.key_released(K_Z) {
+            if engine.key_released(Z) {
                 for i in 0..self.output_size {
                     self.noise_seed_1d[i] = random::<f32>();
                 }
             }
 
-            if engine.key_released(K_X) {
+            if engine.key_released(X) {
                 for i in 0..self.output_size {
                     self.noise_seed_1d[i] = 2.0 * random::<f32>() - 1.0;
                 }
@@ -175,17 +175,17 @@ impl ConsoleGame for PerlinNoise {
 
                 if y < mid {
                     for f in y as i32..mid as i32 {
-                        engine.draw_with(x as i32, f, PIXEL_SOLID, FG_GREEN);
+                        engine.draw_with(x as i32, f, SOLID, FG_GREEN);
                     }
                 } else {
                     let flipped_y = mid - (y - mid);
                     for f in flipped_y as i32..mid as i32 {
-                        engine.draw_with(x as i32, f, PIXEL_SOLID, FG_GREEN);
+                        engine.draw_with(x as i32, f, SOLID, FG_GREEN);
                     }
                 }
             }
         } else if self.mode == 2 {
-            if engine.key_released(K_Z) {
+            if engine.key_released(Z) {
                 for i in 0..self.output_width * self.output_height {
                     self.noise_seed_2d[i] = random::<f32>();
                 }
@@ -195,27 +195,27 @@ impl ConsoleGame for PerlinNoise {
 
             for x in 0..self.output_width {
                 for y in 0..self.output_height {
-                    let pixel_bw = (self.noise_2d[y * self.output_width + x] * 12.0) as usize;
-                    let (bg_col, fg_col, sym) = match pixel_bw {
-                        0 => (BG_BLACK, FG_BLACK, PIXEL_SOLID),
-                        1 => (BG_BLACK, FG_DARK_GREY, PIXEL_QUARTER),
-                        2 => (BG_BLACK, FG_DARK_GREY, PIXEL_HALF),
-                        3 => (BG_BLACK, FG_DARK_GREY, PIXEL_THREEQUARTERS),
-                        4 => (BG_BLACK, FG_DARK_GREY, PIXEL_SOLID),
-                        5 => (BG_DARK_GREY, FG_GREY, PIXEL_QUARTER),
-                        6 => (BG_DARK_GREY, FG_GREY, PIXEL_HALF),
-                        7 => (BG_DARK_GREY, FG_GREY, PIXEL_THREEQUARTERS),
-                        8 => (BG_DARK_GREY, FG_GREY, PIXEL_SOLID),
-                        9 => (BG_GREY, FG_WHITE, PIXEL_QUARTER),
-                        10 => (BG_GREY, FG_WHITE, PIXEL_HALF),
-                        11 => (BG_GREY, FG_WHITE, PIXEL_THREEQUARTERS),
-                        _ => (BG_GREY, FG_WHITE, PIXEL_SOLID),
+                    let bw = (self.noise_2d[y * self.output_width + x] * 12.0) as usize;
+                    let (bg_col, fg_col, sym) = match bw {
+                        0 => (BG_BLACK, FG_BLACK, SOLID),
+                        1 => (BG_BLACK, FG_DARK_GREY, QUARTER),
+                        2 => (BG_BLACK, FG_DARK_GREY, HALF),
+                        3 => (BG_BLACK, FG_DARK_GREY, THREE_QUARTERS),
+                        4 => (BG_BLACK, FG_DARK_GREY, SOLID),
+                        5 => (BG_DARK_GREY, FG_GREY, QUARTER),
+                        6 => (BG_DARK_GREY, FG_GREY, HALF),
+                        7 => (BG_DARK_GREY, FG_GREY, THREE_QUARTERS),
+                        8 => (BG_DARK_GREY, FG_GREY, SOLID),
+                        9 => (BG_GREY, FG_WHITE, QUARTER),
+                        10 => (BG_GREY, FG_WHITE, HALF),
+                        11 => (BG_GREY, FG_WHITE, THREE_QUARTERS),
+                        _ => (BG_GREY, FG_WHITE, SOLID),
                     };
                     engine.draw_with(x as i32, y as i32, sym, fg_col | bg_col);
                 }
             }
         } else if self.mode == 3 {
-            if engine.key_released(K_Z) {
+            if engine.key_released(Z) {
                 for i in 0..self.output_width * self.output_height {
                     self.noise_seed_2d[i] = random::<f32>();
                 }
@@ -225,25 +225,25 @@ impl ConsoleGame for PerlinNoise {
 
             for x in 0..self.output_width {
                 for y in 0..self.output_height {
-                    let pixel_bw = (self.noise_2d[y * self.output_width + x] * 16.0) as usize;
-                    let (bg_col, fg_col, sym) = match pixel_bw {
-                        0 => (BG_DARK_BLUE, FG_DARK_BLUE, PIXEL_SOLID),
-                        1 => (BG_DARK_BLUE, FG_BLUE, PIXEL_QUARTER),
-                        2 => (BG_DARK_BLUE, FG_BLUE, PIXEL_HALF),
-                        3 => (BG_DARK_BLUE, FG_BLUE, PIXEL_THREEQUARTERS),
-                        4 => (BG_DARK_BLUE, FG_BLUE, PIXEL_SOLID),
-                        5 => (BG_BLUE, FG_GREEN, PIXEL_QUARTER),
-                        6 => (BG_BLUE, FG_GREEN, PIXEL_HALF),
-                        7 => (BG_BLUE, FG_GREEN, PIXEL_THREEQUARTERS),
-                        8 => (BG_BLUE, FG_GREEN, PIXEL_SOLID),
-                        9 => (BG_GREEN, FG_DARK_GREY, PIXEL_QUARTER),
-                        10 => (BG_GREEN, FG_DARK_GREY, PIXEL_HALF),
-                        11 => (BG_GREEN, FG_DARK_GREY, PIXEL_THREEQUARTERS),
-                        12 => (BG_GREEN, FG_DARK_GREY, PIXEL_SOLID),
-                        13 => (BG_DARK_GREY, FG_WHITE, PIXEL_QUARTER),
-                        14 => (BG_DARK_GREY, FG_WHITE, PIXEL_HALF),
-                        15 => (BG_DARK_GREY, FG_WHITE, PIXEL_THREEQUARTERS),
-                        _ => (BG_DARK_GREY, FG_WHITE, PIXEL_SOLID),
+                    let bw = (self.noise_2d[y * self.output_width + x] * 16.0) as usize;
+                    let (bg_col, fg_col, sym) = match bw {
+                        0 => (BG_DARK_BLUE, FG_DARK_BLUE, SOLID),
+                        1 => (BG_DARK_BLUE, FG_BLUE, QUARTER),
+                        2 => (BG_DARK_BLUE, FG_BLUE, HALF),
+                        3 => (BG_DARK_BLUE, FG_BLUE, THREE_QUARTERS),
+                        4 => (BG_DARK_BLUE, FG_BLUE, SOLID),
+                        5 => (BG_BLUE, FG_GREEN, QUARTER),
+                        6 => (BG_BLUE, FG_GREEN, HALF),
+                        7 => (BG_BLUE, FG_GREEN, THREE_QUARTERS),
+                        8 => (BG_BLUE, FG_GREEN, SOLID),
+                        9 => (BG_GREEN, FG_DARK_GREY, QUARTER),
+                        10 => (BG_GREEN, FG_DARK_GREY, HALF),
+                        11 => (BG_GREEN, FG_DARK_GREY, THREE_QUARTERS),
+                        12 => (BG_GREEN, FG_DARK_GREY, SOLID),
+                        13 => (BG_DARK_GREY, FG_WHITE, QUARTER),
+                        14 => (BG_DARK_GREY, FG_WHITE, HALF),
+                        15 => (BG_DARK_GREY, FG_WHITE, THREE_QUARTERS),
+                        _ => (BG_DARK_GREY, FG_WHITE, SOLID),
                     };
                     engine.draw_with(x as i32, y as i32, sym, fg_col | bg_col);
                 }
