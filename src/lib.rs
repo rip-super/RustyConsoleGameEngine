@@ -388,7 +388,7 @@ pub mod key {
 /// like `note::C4` (Middle C) or `note::A4` (440 Hz).
 ///
 /// # Example
-/// ```ignore
+/// ```rust
 /// // Play a single note for 500 ms
 /// engine.audio.play_note(note::A4, 500);
 ///
@@ -1286,6 +1286,10 @@ unsafe extern "system" fn console_handler(ctrl_type: u32) -> BOOL {
 /// To create a game, define a struct containing your game state and implement this trait
 /// for it. The engine will call the provided methods during the game loop.
 pub trait ConsoleGame: Sized {
+    /// Sets the name of the game or application.
+    /// The default name is "Default"
+    ///
+    /// Override this method to set a custom title for your game.
     fn app_name(&self) -> &str {
         "Default"
     }
